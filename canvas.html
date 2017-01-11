@@ -3,7 +3,7 @@
 
     </head>
     <body>
-        <canvas id="canvas" width="100%" height="600"></canvas>
+        <canvas id="canvas" tabindex="1" width="80%" height="900"></canvas>
 
         <!--<p id="downlog">Down</p>
         <p id="movelog">Move</p>
@@ -11,63 +11,65 @@
         <p id="outlog">Out</p>-->
 
         <script type="text/javascript" language="javascript">
-
             var canvas = document.getElementById("canvas");
             var context = canvas.getContext("2d");
-            canvas.width  = window.innerWidth;
-            canvas.height = window.innerHeight;
+
+            // var canvasOffset=$("#canvas").offset();
+            // var offsetX=canvasOffset.left;
+            // var offsetY=canvasOffset.top;
 
             var margin = 20;
-            var border = 1;
-            var width = 220;
-            var heigth = 50;
+            var border = 5;
+            var width = 160;
+            var heigth = 40;
 
-            // 1 = 4n
-            // 2 = 8n
-            // 3 = 16n
-            // 4 = 32n
             var rhythm = 1;
-            var pulses = 3 * rhythm;
+            var pulses = 4 * rhythm;
             var measures = 4;
-            var frequencies = 7;
+            var frequencies = 5;
 
             var widthPerCell = border + width;
             var heightPerCell = border + heigth;
 
-            var p1x = margin + border;
-            var p1y = margin + border;
-            var p2x = margin + widthPerCell - 1;
-            var p2y = margin + heightPerCell - 1;
+            // achar a área dos 
+            // var p1x = margin + border;
+            // var p1y = margin + border;
+            // var p2x = margin + widthPerCell - 1;
+            // var p2y = margin + heightPerCell - 1;
+
+            var sequencerWidthPerMeasure = (width * pulses) + (border * (pulses + 1))
+            var sequencerHeightPerMeasure = (heigth * frequencies) + (border * (frequencies + 1));
+
+            canvas.width  = margin * 2 + sequencerWidthPerMeasure;
+            canvas.height = margin * 2 + sequencerHeightPerMeasure;
 
             // fazer os measures
             // por a separação de measures, guardar em uma variavel pra calculo de distancia
             // fazer array de posições
             // selecionar
             // selecionados
-            // remover a selação
-            //
-            //Por a barra de separação entre measures | 
-            //Variavel com width de measure + barra de separação, essa distancia tem que ser considerada para 
-            //montar a matriz usando widthPerCell X vezes, X = pulses
+            // remover a seleção
 
-            canvas.addEventListener('keypress', function() {
-                // verificar se é o SHIFT, se for fazer unbind do click
-                // abrir a selação de multiplas celulas
-                // http://stackoverflow.com/questions/12886286/addeventlistener-for-keydown-on-canvas
+            // canvas transparente, printar canvas
+            // http://stackoverflow.com/questions/19132064/transparency-context-fill-style-in-canvas-html5
+            // por na lisa de selecionados
+            canvas.addEventListener('click', function(e) { handleClick(e) });
 
-                // verificar se é DEL ou BACKSPACE e remover a seleção
+            // verificar se é o SHIFT, se for fazer unbind do click
+            // abrir a selação de multiplas celulas
+            // http://stackoverflow.com/questions/12886286/addeventlistener-for-keydown-on-canvas
+            // verificar se é DEL ou BACKSPACE e remover a seleção
+            // verificar se são setas e movimentar a selação
+            canvas.addEventListener('keydown', function(e) { handleKeyDown(e) });
 
-                // verificar se são setas e movimentar a selação
-            });
+            // voltar evento do click   
+            canvas.addEventListener('keyup', function(e) { handleKeyUp(e) });
 
-            canvas.addEventListener('keyup', function() {
-                // voltar evento do click 
-            });
+            canvas.addEventListener('mousedown', function(e) { handleMouseDown(e) });
 
-            canvas.addEventListener('click', function() {
-                // por na lisa de selecionados
-            });
+            canvas.addEventListener('mouseup', function(e) { handleMouseUp(e) });
 
+            canvas.addEventListener('mousemove', function(e) { handleMouseMove(e) });
 
             function draw() {
                 context.beginPath();
@@ -78,66 +80,60 @@
                 for(i = 0; i <= frequencies; i++) {
                     var line = i == 0 ? 0 : border;
 
-                    context.moveTo(margin, margin + (heigth + line) * i);
-                    context.lineTo(margin + width * pulses + pulses, margin + (heigth + line) * i);
+                    for (z = 0; z <= border; z++) {
+                        context.moveTo(margin, margin + (heigth + line) * i + z);
+                        context.lineTo(margin + (width * pulses) + (border * (pulses + 1)), margin + (heigth + line) * i + z);
+                    }
                 }
 
                 // axis y
                 for(i = 0; i <= pulses; i++) {
                     var line = i == 0 ? 0 : border;
 
-                    context.moveTo(margin + (width + line) * i, margin);
-                    context.lineTo(margin + (width + line) * i, margin + heigth * frequencies + frequencies);
+                    for (z = 0; z <= border; z++) {
+                        context.moveTo(margin + (width + line) * i + z, margin);
+                        context.lineTo(margin + (width + line) * i + z, margin + (heigth * frequencies) + (border * (frequencies + 1)));
+                    }
                 }
 
                 context.stroke();
             }
 
-            // var canvas=document.getElementById("canvas");
-            // var ctx=canvas.getContext("2d");
+            function handleClick(e) {
+                var i = 1;
+            }
 
-            // var canvasOffset=$("#canvas").offset();
-            // var offsetX=canvasOffset.left;
-            // var offsetY=canvasOffset.top;
+            function handleKeyDown(e) {
+                var i = 1;
+            }
 
-            // function handleMouseDown(e){
-            // mouseX=parseInt(e.clientX-offsetX);
-            // mouseY=parseInt(e.clientY-offsetY);
-            // $("#downlog").html("Down: "+ mouseX + " / " + mouseY);
+            function handleKeyUp(e) {
+                var i = 1;
+            }
 
-            // // Put your mousedown stuff here
+            function handleMouseDown(e) {
+                // mouseX=parseInt(e.clientX-offsetX);
+                // mouseY=parseInt(e.clientY-offsetY);
+                // $("#downlog").html("Down: "+ mouseX + " / " + mouseY);
 
-            // }
+                // // Put your mousedown stuff here
+            }
 
-            // function handleMouseUp(e){
-            // mouseX=parseInt(e.clientX-offsetX);
-            // mouseY=parseInt(e.clientY-offsetY);
-            // $("#uplog").html("Up: "+ mouseX + " / " + mouseY);
+            function handleMouseUp(e) {
+                // mouseX=parseInt(e.clientX-offsetX);
+                // mouseY=parseInt(e.clientY-offsetY);
+                // $("#uplog").html("Up: "+ mouseX + " / " + mouseY);
 
-            // // Put your mouseup stuff here
-            // }
+                // // Put your mouseup stuff here
+            }
 
-            // function handleMouseOut(e){
-            // mouseX=parseInt(e.clientX-offsetX);
-            // mouseY=parseInt(e.clientY-offsetY);
-            // $("#outlog").html("Out: "+ mouseX + " / " + mouseY);
+            function handleMouseMove(e) {
+                // mouseX=parseInt(e.clientX-offsetX);
+                // mouseY=parseInt(e.clientY-offsetY);
+                // $("#movelog").html("Move: "+ mouseX + " / " + mouseY);
 
-            // // Put your mouseOut stuff here
-            // }
-
-            // function handleMouseMove(e){
-            // mouseX=parseInt(e.clientX-offsetX);
-            // mouseY=parseInt(e.clientY-offsetY);
-            // $("#movelog").html("Move: "+ mouseX + " / " + mouseY);
-
-            // // Put your mousemove stuff here
-
-            // }
-
-            // $("#canvas").mousedown(function(e){handleMouseDown(e);});
-            // $("#canvas").mousemove(function(e){handleMouseMove(e);});
-            // $("#canvas").mouseup(function(e){handleMouseUp(e);});
-            // $("#canvas").mouseout(function(e){handleMouseOut(e);});
+                // // Put your mousemove stuff here
+            }
 
             draw();
     </script>
