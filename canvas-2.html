@@ -1,0 +1,49 @@
+<html>
+    <head>
+
+    </head>
+    <body>
+        <canvas id="canvas" width="100%" height="600"></canvas>
+        <script type="text/javascript" language="javascript">
+
+            var canvas = document.getElementById("canvas");
+            var context = canvas.getContext("2d");
+            canvas.width  = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            var margin = 20;
+            var width = 160;
+            var heigth = 50;
+
+            var pulses = 4;
+            var measures = 4;
+            var frequencies = 7;
+
+            function draw() {
+                context.beginPath();
+
+                context.moveTo(margin, margin);
+
+                // axis x
+                for(i = 0; i <= frequencies; i++) {
+                    var line = i == 0 ? 0 : 1;
+
+                    context.moveTo(margin, margin + (heigth + line) * i);
+                    context.lineTo(width * pulses + pulses + margin, margin + (heigth + line) * i);
+                }
+
+                // axis y
+                for(i = 0; i <= pulses; i++) {
+                    var line = i == 0 ? 0 : 1;
+
+                    context.moveTo(margin + (width + line) * i, margin);
+                    context.lineTo(margin + (width + line) * i, frequencies * heigth + frequencies + margin);
+                }
+
+                context.stroke();
+            }
+
+            draw();
+    </script>
+    </body>
+</html>
