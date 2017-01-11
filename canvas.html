@@ -18,30 +18,30 @@
             // var offsetX=canvasOffset.left;
             // var offsetY=canvasOffset.top;
 
-            var margin = 20;
-            var border = 5;
-            var width = 160;
-            var heigth = 40;
+            var margin = 10;
+            var separation = 10;
+            var border = 1;
+            var width = 23.75;
+            var heigth = 23.75;
 
             var rhythm = 1;
             var pulses = 4 * rhythm;
             var measures = 4;
-            var frequencies = 5;
+            var frequencies = 7;
 
-            var widthPerCell = border + width;
-            var heightPerCell = border + heigth;
+            var widthPerMeasure = (width * pulses) + (border * (pulses + 1))
+            var heigthPerMeasure = (heigth * frequencies) + (border * (frequencies + 1));
 
+            canvas.width  = margin * 2 + widthPerMeasure * (measures + 1);
+            canvas.height = margin * 2 + heigthPerMeasure;
+
+            // var widthPerCell = border + width;
+            // var heightPerCell = border + heigth;
             // achar a área dos 
             // var p1x = margin + border;
             // var p1y = margin + border;
             // var p2x = margin + widthPerCell - 1;
             // var p2y = margin + heightPerCell - 1;
-
-            var sequencerWidthPerMeasure = (width * pulses) + (border * (pulses + 1))
-            var sequencerHeightPerMeasure = (heigth * frequencies) + (border * (frequencies + 1));
-
-            canvas.width  = margin * 2 + sequencerWidthPerMeasure;
-            canvas.height = margin * 2 + sequencerHeightPerMeasure;
 
             // fazer os measures
             // por a separação de measures, guardar em uma variavel pra calculo de distancia
@@ -71,18 +71,16 @@
 
             canvas.addEventListener('mousemove', function(e) { handleMouseMove(e) });
 
-            function draw() {
-                context.beginPath();
-
-                context.moveTo(margin, margin);
+            function measure(x, y) {
+                context.moveTo(x, y);
 
                 // axis x
                 for(i = 0; i <= frequencies; i++) {
                     var line = i == 0 ? 0 : border;
 
                     for (z = 0; z <= border; z++) {
-                        context.moveTo(margin, margin + (heigth + line) * i + z);
-                        context.lineTo(margin + (width * pulses) + (border * (pulses + 1)), margin + (heigth + line) * i + z);
+                        context.moveTo(x, y + (heigth + line) * i + z);
+                        context.lineTo(x + (width * pulses) + (border * (pulses + 1)), y + (heigth + line) * i + z);
                     }
                 }
 
@@ -91,12 +89,21 @@
                     var line = i == 0 ? 0 : border;
 
                     for (z = 0; z <= border; z++) {
-                        context.moveTo(margin + (width + line) * i + z, margin);
-                        context.lineTo(margin + (width + line) * i + z, margin + (heigth * frequencies) + (border * (frequencies + 1)));
+                        context.moveTo(x + (width + line) * i + z, y);
+                        context.lineTo(x + (width + line) * i + z, y + (heigth * frequencies) + (border * (frequencies + 1)));
                     }
-                }
+                }                
+            }
 
-                context.stroke();
+            function separationASD(x, y) {
+                context.moveTo(x, y);
+                
+                var line = i == 0 ? 0 : border;
+
+                for (z = 0; z <= border; z++) {
+                    context.moveTo(x + (width + line) * i + z, y);
+                    context.lineTo(x + (width + line) * i + z, y + (heigth * frequencies) + (border * (frequencies + 1)));
+                }   
             }
 
             function handleClick(e) {
@@ -135,7 +142,19 @@
                 // // Put your mousemove stuff here
             }
 
-            draw();
+            context.beginPath();
+
+            for (var w = 0; w <= measures - 1; w++) {
+                // isso vai ter que levar em consideração a separação.
+                // isso, ou o widthPerMeasure
+
+                var x = w == 0 ? margin : (margin * w) + (margin + widthPerMeasure * w);
+
+                measure(x, margin);
+            }
+
+            context.stroke();
+            
     </script>
     </body>
 </html>
