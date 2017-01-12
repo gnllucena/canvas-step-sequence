@@ -11,21 +11,24 @@
         <p id="outlog">Out</p>-->
 
         <script type="text/javascript" language="javascript">
+            //http://stackoverflow.com/questions/30928253/writing-npm-modules-in-typescript
+
             var canvas = document.getElementById("canvas");
-            canvas.addEventListener('click', function(e) { handleClick(e) });
-            canvas.addEventListener('keydown', function(e) { handleKeyDown(e) });
-            canvas.addEventListener('keyup', function(e) { handleKeyUp(e) });
-            canvas.addEventListener('mousedown', function(e) { handleMouseDown(e) });
-            canvas.addEventListener('mouseup', function(e) { handleMouseUp(e) });
-            canvas.addEventListener('mousemove', function(e) { handleMouseMove(e) });
+            canvas.addEventListener('click', function(e) { handleClick(e); });
+            canvas.addEventListener('keydown', function(e) { handleKeyDown(e); });
+            canvas.addEventListener('keyup', function(e) { handleKeyUp(e); });
+            canvas.addEventListener('mousedown', function(e) { handleMouseDown(e); });
+            canvas.addEventListener('mouseup', function(e) { handleMouseUp(e); });
+            canvas.addEventListener('mousemove', function(e) { handleMouseMove(e); });
+            canvas.addEventListener('contextmenu', function(e) { handleContextMenu(e); }, false);
 
             var context = canvas.getContext("2d");
             
             var margin = 5;
             var separation = 10;
             var border = 5;
-            var width = 140;
-            var heigth = 120;
+            var width = 80;
+            var heigth = 30;
 
             var rhythm = 1;
             var pulses = 4 * rhythm;
@@ -34,25 +37,21 @@
 
             var map = [];
 
+            var fillColor = '#EEEEEE';
+            var strokeColor = '#FFFFFF';
+
             var isBackspacePressed = false;
             var isDeletePressed = false;
             var isCtrlPressed = false;
+            var isSelected = false;
 
             var widthPerPulse = border + width;
             var heightPerPulse = border + heigth;
             var widthPerMeasure = (width * pulses) + (border * (pulses + 1))
             var heigthPerMeasure = (heigth * frequencies) + (border * (frequencies + 1));
 
-            canvas.width  = margin * 2 + (widthPerMeasure * measures) + (margin * measures) - margin;
+            canvas.width  = margin * 2 + (widthPerMeasure * measures) + (margin * measures) + (separation * measures) - separation - margin;
             canvas.height = margin * 2 + heigthPerMeasure;
-
-            // var canvasOffset=$("#canvas").offset();
-            // var offsetX=canvasOffset.left;
-            // var offsetY=canvasOffset.top;
-
-            // selecionar
-            // selecionados
-            // remover a seleção
             
             function getMap() {
                 var widthSeparation = 0;
@@ -81,7 +80,7 @@
                             heightPulse += border + heigth;
                         }
                         
-                        widthSeparation += widthPerMeasure + margin;
+                        widthSeparation += widthPerMeasure + margin + separation;
                     }
                 }
 
@@ -120,27 +119,30 @@
                 context.beginPath();
 
                 for (var w = 0; w <= measures - 1; w++) {
-                    var x = w == 0 ? margin : (margin * w) + (margin + widthPerMeasure * w);
+                    var x = w == 0 ? margin : (margin * w) + (margin + widthPerMeasure * w) + separation * w;
 
                     measure(x, margin);
                 }
 
                 context.closePath();
-                context.strokeStyle = '#FFFFFF';
+                context.strokeStyle = strokeColor;
                 context.stroke();
 
                 map = getMap();
 
                 map.forEach(function(i, x, a) {
-                    context.fillStyle = '#EEEEEE';
+                    context.fillStyle = fillColor;
                     context.fillRect(i[0], i[1], i[2], i[3]);
                 });
             }
 
             function handleClick(e) {
-                var i = 1;
-                //http://stackoverflow.com/questions/17130395/real-mouse-position-in-canvas
-                //context.fillRect(x, y, w, h);
+                var rect = canvas.getBoundingClientRect();
+
+                var x = e.clientX - rect.left 
+                var y = e.clientY - rect.top;
+
+                var index = getIndex(x, y);
             }
 
             function handleKeyDown(e) {
@@ -181,6 +183,10 @@
 
                 // // Put your mousemove stuff here
                 //context.fillStyle = 'rgba(157, 0, 0, 0.5)';
+            }
+
+            function handleContextMenu(e) {
+                //http://stackoverflow.com/questions/31601393/create-context-menu-using-jquery-with-html-5-canvas
             }
             
             draw();
