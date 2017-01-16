@@ -33,13 +33,13 @@ class configuration {
         }
         
         if (_width == null) {
-            this._width = 80;
+            this._width = 40;
         } else {
             this._width = _width;
         }
         
         if (_heigth == null) {
-            this._heigth = 30;
+            this._heigth = 25;
         } else {
             this._heigth = _heigth;
         }

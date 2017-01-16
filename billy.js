@@ -1,18 +1,21 @@
+//DESLOCAMENTO / WIDTH DO QUADRADO
 var billy = (function () {
     function billy(selector, config, measures) {
-        this._isMouseClicked = false;
-        this._isMouseUnclicked = false;
+        this._isDragging = false;
         this._isCtrlPressed = false;
         this._isShiftPressed = false;
         this._isUpArrowPressed = false;
         this._isDownArrowPressed = false;
         this._isLeftArrowPressed = false;
         this._isRigthArrowPressed = false;
-        this._offset = 0;
+        this._offsetX = 0;
+        this._offsetY = 0;
+        this._measuresWidth = 0;
+        this._measuresHeight = 0;
         this._measures = measures;
-        this._config = new configuration(config._frequencies, config._margin, config._width, config._heigth, config._border, config._separation, config._backgroundColor, config._borderColor, config._shortcuts);
-        if (this._config._shortcuts == null) {
-            this._config._shortcuts = new shortcuts(null, null, null, null, null, null, null);
+        this._configuration = new configuration(config._frequencies, config._margin, config._width, config._heigth, config._border, config._separation, config._backgroundColor, config._borderColor, config._shortcuts);
+        if (this._configuration._shortcuts == null) {
+            this._configuration._shortcuts = new shortcuts(null, null, null, null, null, null, null);
         }
         var that = this;
         this._canvas = document.getElementById(selector);
@@ -29,10 +32,12 @@ var billy = (function () {
         };
         var factor = 0.05;
         var maxWidth = this._canvas.parentElement.offsetWidth - this._canvas.parentElement.offsetWidth * factor;
-        var maxHeigth = (this._config._heigth * this._config._frequencies) + (this._config._border * (this._config._frequencies + 1)) + this._config._margin * 2;
+        var maxHeigth = (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)) + this._configuration._margin * 2;
         window.addEventListener('resize', function () {
             that._canvas.width = that._canvas.parentElement.offsetWidth - that._canvas.parentElement.offsetWidth * factor;
             that._canvas.height = maxHeigth;
+            that._offsetX = 0;
+            that._offsetY = 0;
             that.draw();
         });
         this._canvas.width = maxWidth;
@@ -42,69 +47,106 @@ var billy = (function () {
         var width = 0;
         for (var i = 0; i <= this._measures.length - 1; i++) {
             var pulses = this._measures[i]._pulses * this._measures[i]._rhythm;
-            width += (pulses * this._config._width) + (pulses * this._config._border) + this._config._margin + this._config._separation;
+            width += (pulses * this._configuration._width) + (pulses * this._configuration._border) + this._configuration._margin + this._configuration._separation;
         }
         var context = this._canvas.getContext("2d");
-        var x = this._config._margin;
-        var y = this._config._margin;
+        var x = this._configuration._margin;
+        var y = this._configuration._margin;
+        context.beginPath();
         for (var i = 0; i <= this._measures.length - 1; i++) {
             context.moveTo(x, y);
             // x
-            for (var w = 0; w <= this._config._frequencies; w++) {
-                var line = w == 0 ? 0 : this._config._border;
-                for (var z = 0; z <= this._config._border; z++) {
-                    context.moveTo(x, y + (this._config._heigth + line) * w + z);
-                    context.lineTo(x + (this._config._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._config._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._config._border, y + (this._config._heigth + line) * w + z);
+            for (var w = 0; w <= this._configuration._frequencies; w++) {
+                var line = w == 0 ? 0 : this._configuration._border;
+                for (var z = 0; z <= this._configuration._border; z++) {
+                    context.moveTo(x - this._offsetX, y + (this._configuration._heigth + line) * w + z);
+                    context.lineTo(x + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._border - this._offsetX, y + (this._configuration._heigth + line) * w + z);
                 }
             }
             // y
             for (var w = 0; w <= this._measures[i]._pulses * this._measures[i]._rhythm; w++) {
-                var line = w == 0 ? 0 : this._config._border;
-                for (var z = 0; z <= this._config._border; z++) {
-                    context.moveTo(x + (this._config._width + line) * w + z, y);
-                    context.lineTo(x + (this._config._width + line) * w + z, y + (this._config._heigth * this._config._frequencies) + (this._config._border * (this._config._frequencies + 1)));
+                var line = w == 0 ? 0 : this._configuration._border;
+                for (var z = 0; z <= this._configuration._border; z++) {
+                    context.moveTo(x + (this._configuration._width + line) * w + z - this._offsetX, y);
+                    context.lineTo(x + (this._configuration._width + line) * w + z - this._offsetX, y + (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)));
                 }
             }
-            x += this._config._margin + (this._config._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._config._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._config._separation;
+            x += this._configuration._margin + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._separation;
         }
-        context.strokeStyle = this._config._borderColor;
-        context.stroke();
+        context.strokeStyle = this._configuration._borderColor;
         context.closePath();
+        context.stroke();
+        this._measuresWidth = x;
     };
     billy.prototype.handleClick = function (e) {
-        document.body.style.cursor = 'pointer';
-        this._isMouseClicked = true;
-        this._isMouseUnclicked = false;
+        // e.preventDefault();
+        // e.stopPropagation();
     };
     billy.prototype.handleKeyDown = function (e) {
+        // e.preventDefault();
+        // e.stopPropagation();
     };
     billy.prototype.handleKeyUp = function (e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+        this._isDragging = false;
     };
     billy.prototype.handleMouseDown = function (e) {
-    };
-    billy.prototype.handleMouseUp = function (e) {
-        document.body.style.cursor = 'default';
-        this._isMouseClicked = false;
-        this._isMouseUnclicked = true;
-    };
-    billy.prototype.handleMouseOut = function (e) {
-        document.body.style.cursor = 'default';
-    };
-    billy.prototype.handleMouseMove = function (e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+        document.body.style.cursor = 'pointer';
         var rect = this._canvas.getBoundingClientRect();
         var x = e.clientX - rect.left;
         var y = e.clientY - rect.top;
-        //this._offset = x;
         this._mouseX = x;
         this._mouseY = y;
-        if (this._isMouseClicked) {
+        this._isDragging = true;
+    };
+    billy.prototype.handleMouseUp = function (e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+        document.body.style.cursor = 'default';
+        this._isDragging = false;
+    };
+    billy.prototype.handleMouseOut = function (e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+        document.body.style.cursor = 'default';
+    };
+    billy.prototype.handleMouseMove = function (e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+        if (this._isDragging) {
             document.body.style.cursor = 'move';
+            var rect = this._canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            this._offsetX += (x - this._mouseX) * -1;
+            this._offsetY += (y - this._mouseY) * -1;
+            // as medidas, quando maiores que o tamanho do canvas, não devem ultrapassar os limites do canvas
+            if (this._offsetX > this._measuresWidth - this._canvas.width - this._configuration._separation) {
+                this._offsetX = this._measuresWidth - this._canvas.width - this._configuration._separation + this._configuration._border;
+            }
+            else if (this._offsetX < 1) {
+                this._offsetX = 0;
+            }
+            // caso as medidas somadas sejam menores que o tamanho do canvas, as medidas devem sempre encostar na esquerda
+            if (this._measuresWidth < this._canvas.width) {
+                this._offsetX = 0;
+            }
+            this._mouseX = x;
+            this._mouseY = y;
+            var context = this._canvas.getContext("2d");
+            context.clearRect(0, 0, this._canvas.width, this._canvas.height);
             this.draw();
+        }
+        else {
+            document.body.style.cursor = 'pointer';
         }
     };
     billy.prototype.handleContextMenu = function (e) {
     };
-    billy.prototype.getBlocksMap = function () {
+    billy.prototype.getBlocks = function () {
         // var widthSeparation = 0;
         // var widthPulse = 0;
         // var heightPulse = 0;
@@ -127,7 +169,7 @@ var billy = (function () {
         // }
         // return map;
     };
-    billy.prototype.getMeasuresMap = function () {
+    billy.prototype.getMeasures = function () {
     };
     return billy;
 }());
@@ -155,13 +197,13 @@ var configuration = (function () {
             this._margin = _margin;
         }
         if (_width == null) {
-            this._width = 80;
+            this._width = 40;
         }
         else {
             this._width = _width;
         }
         if (_heigth == null) {
-            this._heigth = 30;
+            this._heigth = 25;
         }
         else {
             this._heigth = _heigth;

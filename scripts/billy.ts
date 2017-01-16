@@ -1,10 +1,12 @@
+//DESLOCAMENTO / WIDTH DO QUADRADO
+
 class billy {
     _canvas : HTMLCanvasElement;
-    _config : configuration;
+    _configuration : configuration;
     _measures : Array<measure>;
+    _blocks: Array<block>;
 
-    _isMouseClicked: boolean = false;
-    _isMouseUnclicked: boolean = false;
+    _isDragging: boolean = false;
     _isCtrlPressed: boolean = false;
     _isShiftPressed: boolean = false;
     _isUpArrowPressed: boolean = false;
@@ -12,14 +14,18 @@ class billy {
     _isLeftArrowPressed: boolean = false;
     _isRigthArrowPressed: boolean = false;
 
-    _offset: number = 0;
+    _offsetX: number = 0;
+    _offsetY: number = 0;
     _mouseX: number;
     _mouseY: number;
+
+    _measuresWidth: number = 0;
+    _measuresHeight: number = 0;
 
     constructor(selector: string, config: configuration, measures: Array<measure>) {
         this._measures = measures;
 
-        this._config = new configuration(
+        this._configuration = new configuration(
             config._frequencies, 
             config._margin, 
             config._width, 
@@ -30,8 +36,8 @@ class billy {
             config._borderColor, 
             config._shortcuts);
 
-        if (this._config._shortcuts == null) {
-            this._config._shortcuts = new shortcuts(null, null, null, null, null, null, null);
+        if (this._configuration._shortcuts == null) {
+            this._configuration._shortcuts = new shortcuts(null, null, null, null, null, null, null);
         }
 
         let that = this;
@@ -53,11 +59,15 @@ class billy {
 
         let factor = 0.05;
         let maxWidth = this._canvas.parentElement.offsetWidth - this._canvas.parentElement.offsetWidth * factor;
-        let maxHeigth = (this._config._heigth * this._config._frequencies) + (this._config._border * (this._config._frequencies + 1)) + this._config._margin * 2;
+        let maxHeigth = (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)) + this._configuration._margin * 2;
         
         window.addEventListener('resize', function() {
             that._canvas.width = that._canvas.parentElement.offsetWidth - that._canvas.parentElement.offsetWidth * factor;
             that._canvas.height = maxHeigth;
+
+            that._offsetX = 0;
+            that._offsetY = 0;
+
             that.draw();
         });
 
@@ -70,98 +80,72 @@ class billy {
         for(let i = 0; i <= this._measures.length - 1; i++) {
             let pulses = this._measures[i]._pulses * this._measures[i]._rhythm;
 
-            width += (pulses * this._config._width) + (pulses * this._config._border) + this._config._margin + this._config._separation;
+            width += (pulses * this._configuration._width) + (pulses * this._configuration._border) + this._configuration._margin + this._configuration._separation;
         }
 
         let context = this._canvas.getContext("2d");
 
-        let x = this._config._margin;
-        let y = this._config._margin;
+        let x = this._configuration._margin;
+        let y = this._configuration._margin;
+
+        context.beginPath();
 
         for (let i = 0; i <= this._measures.length - 1; i++) {            
             context.moveTo(x, y);
 
             // x
-            for(let w = 0; w <= this._config._frequencies; w++) {
-                let line = w == 0 ? 0 : this._config._border;
+            for(let w = 0; w <= this._configuration._frequencies; w++) {
+                let line = w == 0 ? 0 : this._configuration._border;
 
-                for (let z = 0; z <= this._config._border; z++) {
-                    context.moveTo(x, y + (this._config._heigth + line) * w + z);
-                    context.lineTo(x + (this._config._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._config._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._config._border, y + (this._config._heigth + line) * w + z);
+                for (let z = 0; z <= this._configuration._border; z++) {
+                    context.moveTo(x - this._offsetX, y + (this._configuration._heigth + line) * w + z);
+                    context.lineTo(x + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._border - this._offsetX, y + (this._configuration._heigth + line) * w + z);
                 }
             }
             
             // y
             for(let w = 0; w <= this._measures[i]._pulses * this._measures[i]._rhythm; w++) {
-                let line = w == 0 ? 0 : this._config._border;
+                let line = w == 0 ? 0 : this._configuration._border;
 
-                for (let z = 0; z <= this._config._border; z++) {
-                    context.moveTo(x + (this._config._width + line) * w + z, y);
-                    context.lineTo(x + (this._config._width + line) * w + z, y + (this._config._heigth * this._config._frequencies) + (this._config._border * (this._config._frequencies + 1)));
+                for (let z = 0; z <= this._configuration._border; z++) {
+                    context.moveTo(x + (this._configuration._width + line) * w + z - this._offsetX, y);
+                    context.lineTo(x + (this._configuration._width + line) * w + z - this._offsetX, y + (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)));
                 }
             }
 
-            x += this._config._margin + (this._config._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._config._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._config._separation;
+            x += this._configuration._margin + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._separation;
         }
 
-        context.strokeStyle = this._config._borderColor;
-        context.stroke();
+        context.strokeStyle = this._configuration._borderColor;
         context.closePath();
+        context.stroke();
+
+        this._measuresWidth = x;
     }
 
-    handleClick(e) {
-        
-    }
+    blocks() {
+        let widthPulses = this._configuration._margin + this._configuration._border;
+        let heigthFrequencies = this._configuration._margin + this._configuration._border;
 
-    handleKeyDown(e) {
+        this._blocks = new Array<block>();
 
-    }
+        for (let measure of this._measures) {
+            for (let i = 0; i <= measure._pulses * measure._rhythm; i++) {
+                this._blocks.push(new block(widthPulses, heigthFrequencies, this._configuration._width, this._configuration._heigth));
 
-    handleKeyUp(e) {
+                for (let w = 0; w <= this._configuration._frequencies; w++) {
+                    this._blocks.push(new block(widthPulses, heigthFrequencies, this._configuration._width, this._configuration._heigth));
 
-    }
+                    heigthFrequencies += this._configuration._border;
+                }
 
-    handleMouseDown(e) {
-        document.body.style.cursor = 'pointer';
+                widthPulses += this._configuration._border;
+            }
 
-        this._isMouseClicked = true;
-        this._isMouseUnclicked = false;
-    }
-
-    handleMouseUp(e) {
-        document.body.style.cursor = 'default';
-
-        this._isMouseClicked = false;
-        this._isMouseUnclicked = true;
-    }
-
-    handleMouseOut(e) {
-        document.body.style.cursor = 'default';
-    }
-
-    handleMouseMove(e) {
-        var rect = this._canvas.getBoundingClientRect();
-
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
-
-        //this._offset = x;
-
-        this._mouseX = x; 
-        this._mouseY = y;
-
-        if (this._isMouseClicked) {
-            document.body.style.cursor = 'move';
-
-            this.draw();
+            widthPulses += this._configuration._separation;
+            heigthFrequencies = this._configuration._margin + this._configuration._border;
         }
-    }
 
-    handleContextMenu(e) {
-
-    }
-
-    getBlocksMap() {
         // var widthSeparation = 0;
         // var widthPulse = 0;
         // var heightPulse = 0;
@@ -190,7 +174,100 @@ class billy {
         // return map;
     }
 
-    getMeasuresMap() {
+    handleClick(e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+    }
 
+    handleKeyDown(e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+    }
+
+    handleKeyUp(e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+
+        this._isDragging = false;
+    }
+
+    handleMouseDown(e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+
+        document.body.style.cursor = 'pointer';
+
+        var rect = this._canvas.getBoundingClientRect();
+
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+
+        this._mouseX = x; 
+        this._mouseY = y;
+        this._isDragging = true;
+    }
+
+    handleMouseUp(e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+
+        document.body.style.cursor = 'default';
+
+        this._isDragging = false;
+    }
+
+    handleMouseOut(e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+
+        document.body.style.cursor = 'default';
+    }
+
+    handleMouseMove(e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+
+        if (this._isDragging) {
+            document.body.style.cursor = 'move';
+            
+            var rect = this._canvas.getBoundingClientRect();
+
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+
+            this._offsetX += (x - this._mouseX) * -1;
+            this._offsetY += (y - this._mouseY) * -1;
+
+            // as medidas, quando maiores que o tamanho do canvas, não devem ultrapassar os limites do canvas
+            if (this._offsetX > this._measuresWidth - this._canvas.width - this._configuration._separation) {
+                this._offsetX = this._measuresWidth - this._canvas.width - this._configuration._separation + this._configuration._border;
+            } else if (this._offsetX < 1) {
+                this._offsetX = 0;
+            }
+
+            // caso as medidas somadas sejam menores que o tamanho do canvas, as medidas devem sempre encostar na esquerda
+            if (this._measuresWidth < this._canvas.width) {
+                this._offsetX = 0;
+            }
+
+            this._mouseX = x; 
+            this._mouseY = y;
+            
+            let context = this._canvas.getContext("2d");
+            context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+            this.draw();
+        }
+        else {
+            document.body.style.cursor = 'pointer';
+        }
+    }
+
+    handleContextMenu(e) {
+    }
+
+    
+
+    getMeasures() {
     }
 }
