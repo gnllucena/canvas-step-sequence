@@ -1,136 +1,193 @@
 class billy {
-    context : CanvasRenderingContext2D;
-    canvas : HTMLCanvasElement;
-    parameters : parameters;
-    measures : Array<measure>;
-    blocksMap : Array<block>;
-    measuresMap : Array<block>;
+    _canvas : HTMLCanvasElement;
+    _config : configuration;
+    _measures : Array<measure>;
 
-    constructor(parameters: parameters, measures: Array<measure>) {
-        this.parameters = parameters;
-        this.measures = measures;
+    _isMouseClicked: boolean = false;
+    _isMouseUnclicked: boolean = false;
+    _isCtrlPressed: boolean = false;
+    _isShiftPressed: boolean = false;
+    _isUpArrowPressed: boolean = false;
+    _isDownArrowPressed: boolean = false;
+    _isLeftArrowPressed: boolean = false;
+    _isRigthArrowPressed: boolean = false;
 
-        if (this.parameters.functions == null) {
-            this.parameters.functions = new functions();
+    _offset: number = 0;
+    _mouseX: number;
+    _mouseY: number;
+
+    constructor(selector: string, config: configuration, measures: Array<measure>) {
+        this._measures = measures;
+
+        this._config = new configuration(
+            config._frequencies, 
+            config._margin, 
+            config._width, 
+            config._heigth, 
+            config._border, 
+            config._separation, 
+            config._backgroundColor, 
+            config._borderColor, 
+            config._shortcuts);
+
+        if (this._config._shortcuts == null) {
+            this._config._shortcuts = new shortcuts(null, null, null, null, null, null, null);
         }
 
-        if (this.parameters.shortcuts == null) {
-            this.parameters.shortcuts = new shortcuts();
-        }
+        let that = this;
 
-        let handleClick = this.parameters.functions.handleClick;
-        let handleKeyDown = this.parameters.functions.handleKeyDown;
-        let handleKeyUp = this.parameters.functions.handleKeyUp;
-        let handleMouseDown = this.parameters.functions.handleMouseDown
-        let handleMouseUp = this.parameters.functions.handleMouseUp;
-        let handleMouseMove = this.parameters.functions.handleMouseMove;
-        let handleContextMenu = this.parameters.functions.handleContextMenu;
+        this._canvas = <HTMLCanvasElement> document.getElementById(selector);
+    
+        this._canvas.addEventListener('click', function(e) { that.handleClick(e); });
+        this._canvas.addEventListener('keydown', function(e) { that.handleKeyDown(e); });
+        this._canvas.addEventListener('keyup', function(e) { that.handleKeyUp(e); });
+        this._canvas.addEventListener('mousedown', function(e) { that.handleMouseDown(e); });
+        this._canvas.addEventListener('mouseup', function(e) { that.handleMouseUp(e); });
+        this._canvas.addEventListener('mousemove', function(e) { that.handleMouseMove(e); });
+        this._canvas.addEventListener('mouseout', function(e) { that.handleMouseOut(e); });
+        this._canvas.addEventListener('contextmenu', function(e) { that.handleContextMenu(e); }, false);
 
-        var canvas = <HTMLCanvasElement> document.getElementById(this.parameters.canvas);
-
-        canvas.addEventListener('click', function(e) { handleClick(e); });
-        canvas.addEventListener('keydown', function(e) { handleKeyDown(e); });
-        canvas.addEventListener('keyup', function(e) { handleKeyUp(e); });
-        canvas.addEventListener('mousedown', function(e) { handleMouseDown(e); });
-        canvas.addEventListener('mouseup', function(e) { handleMouseUp(e); });
-        canvas.addEventListener('mousemove', function(e) { handleMouseMove(e); });
-        canvas.addEventListener('contextmenu', function(e) { handleContextMenu(e); }, false);
-
-        canvas.oncontextmenu = function (e) {
+        this._canvas.oncontextmenu = function (e) {
             e.preventDefault();
         };
 
         let factor = 0.05;
-        let maxWidth = canvas.parentElement.offsetWidth - canvas.parentElement.offsetWidth * factor;
-        let maxHeigth = (this.parameters.heigth * this.parameters.frequencies) + (this.parameters.border * (this.parameters.frequencies + 1)) + this.parameters.margin * 2;
+        let maxWidth = this._canvas.parentElement.offsetWidth - this._canvas.parentElement.offsetWidth * factor;
+        let maxHeigth = (this._config._heigth * this._config._frequencies) + (this._config._border * (this._config._frequencies + 1)) + this._config._margin * 2;
         
-        let that = this;
         window.addEventListener('resize', function() {
-            that.canvas.width = that.canvas.parentElement.offsetWidth - that.canvas.parentElement.offsetWidth * factor;
-            that.canvas.height = maxHeigth;
+            that._canvas.width = that._canvas.parentElement.offsetWidth - that._canvas.parentElement.offsetWidth * factor;
+            that._canvas.height = maxHeigth;
             that.draw();
         });
 
-        this.canvas = canvas;
-        this.context = canvas.getContext("2d");
-
-        this.canvas.width = maxWidth;
-        this.canvas.height = maxHeigth;
+        this._canvas.width = maxWidth;
+        this._canvas.height = maxHeigth;
     }
 
     draw() {
         let width = 0;
-        for(let i = 0; i <= this.measures.length - 1; i++) {
-            let pulses = this.measures[i].pulses * this.measures[i].rhythm;
+        for(let i = 0; i <= this._measures.length - 1; i++) {
+            let pulses = this._measures[i]._pulses * this._measures[i]._rhythm;
 
-            width += (pulses * this.parameters.width) + (pulses * this.parameters.border) + this.parameters.margin + this.parameters.separation;
+            width += (pulses * this._config._width) + (pulses * this._config._border) + this._config._margin + this._config._separation;
         }
 
-        this.context = this.canvas.getContext("2d");
+        let context = this._canvas.getContext("2d");
 
-        this.context.beginPath();
+        let x = this._config._margin;
+        let y = this._config._margin;
 
-        let x = this.parameters.margin;
-        let y = this.parameters.margin;
-
-        for (let i = 0; i <= this.measures.length - 1; i++) {            
-            this.context.moveTo(x, y);
+        for (let i = 0; i <= this._measures.length - 1; i++) {            
+            context.moveTo(x, y);
 
             // x
-            for(let w = 0; w <= this.parameters.frequencies; w++) {
-                let line = w == 0 ? 0 : this.parameters.border;
+            for(let w = 0; w <= this._config._frequencies; w++) {
+                let line = w == 0 ? 0 : this._config._border;
 
-                for (let z = 0; z <= this.parameters.border; z++) {
-                    this.context.moveTo(x, y + (this.parameters.heigth + line) * w + z);
-                    this.context.lineTo(x + (this.parameters.width * this.measures[i].pulses * this.measures[i].rhythm) + (this.parameters.border * this.measures[i].pulses * this.measures[i].rhythm) + this.parameters.border, y + (this.parameters.heigth + line) * w + z);
+                for (let z = 0; z <= this._config._border; z++) {
+                    context.moveTo(x, y + (this._config._heigth + line) * w + z);
+                    context.lineTo(x + (this._config._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._config._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._config._border, y + (this._config._heigth + line) * w + z);
                 }
             }
             
             // y
-            for(let w = 0; w <= this.measures[i].pulses * this.measures[i].rhythm; w++) {
-                let line = w == 0 ? 0 : this.parameters.border;
+            for(let w = 0; w <= this._measures[i]._pulses * this._measures[i]._rhythm; w++) {
+                let line = w == 0 ? 0 : this._config._border;
 
-                for (let z = 0; z <= this.parameters.border; z++) {
-                    this.context.moveTo(x + (this.parameters.width + line) * w + z, y);
-                    this.context.lineTo(x + (this.parameters.width + line) * w + z, y + (this.parameters.heigth * this.parameters.frequencies) + (this.parameters.border * (this.parameters.frequencies + 1)));
+                for (let z = 0; z <= this._config._border; z++) {
+                    context.moveTo(x + (this._config._width + line) * w + z, y);
+                    context.lineTo(x + (this._config._width + line) * w + z, y + (this._config._heigth * this._config._frequencies) + (this._config._border * (this._config._frequencies + 1)));
                 }
             }
 
-            x += this.parameters.margin + (this.parameters.width * this.measures[i].pulses * this.measures[i].rhythm) + (this.parameters.border * this.measures[i].pulses * this.measures[i].rhythm) + this.parameters.separation;
+            x += this._config._margin + (this._config._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._config._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._config._separation;
         }
 
-        this.context.strokeStyle = this.parameters.borderColor;
-        this.context.stroke();
-        this.context.closePath();
+        context.strokeStyle = this._config._borderColor;
+        context.stroke();
+        context.closePath();
+    }
+
+    handleClick(e) {
+        
+    }
+
+    handleKeyDown(e) {
+
+    }
+
+    handleKeyUp(e) {
+
+    }
+
+    handleMouseDown(e) {
+        document.body.style.cursor = 'pointer';
+
+        this._isMouseClicked = true;
+        this._isMouseUnclicked = false;
+    }
+
+    handleMouseUp(e) {
+        document.body.style.cursor = 'default';
+
+        this._isMouseClicked = false;
+        this._isMouseUnclicked = true;
+    }
+
+    handleMouseOut(e) {
+        document.body.style.cursor = 'default';
+    }
+
+    handleMouseMove(e) {
+        var rect = this._canvas.getBoundingClientRect();
+
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+
+        //this._offset = x;
+
+        this._mouseX = x; 
+        this._mouseY = y;
+
+        if (this._isMouseClicked) {
+            document.body.style.cursor = 'move';
+
+            this.draw();
+        }
+    }
+
+    handleContextMenu(e) {
+
     }
 
     getBlocksMap() {
-        var widthSeparation = 0;
-        var widthPulse = 0;
-        var heightPulse = 0;
+        // var widthSeparation = 0;
+        // var widthPulse = 0;
+        // var heightPulse = 0;
         
-        if (map.length == 0) {
-            for(var i = 0; i <= measures - 1; i++) {
-                heightPulse = 0;
-                var aux = 0;
-                for(var x = 0; x <= frequencies - 1; x++) {
-                    var yOfPulsesPixel = margin + border + heightPulse;
-                    for(var y = 0; y <= pulses - 1; y++) {
-                        var xOfPulsesPixel = margin + border + widthPulse + widthSeparation;
+        // if (map.length == 0) {
+        //     for(var i = 0; i <= measures - 1; i++) {
+        //         heightPulse = 0;
+        //         var aux = 0;
+        //         for(var x = 0; x <= frequencies - 1; x++) {
+        //             var yOfPulsesPixel = margin + border + heightPulse;
+        //             for(var y = 0; y <= pulses - 1; y++) {
+        //                 var xOfPulsesPixel = margin + border + widthPulse + widthSeparation;
                         
-                        widthPulse += border + width;
+        //                 widthPulse += border + width;
                         
-                        map.push([xOfPulsesPixel, yOfPulsesPixel, width, heigth]);
-                    }
-                    widthPulse = 0;
-                    heightPulse += border + heigth;
-                }
+        //                 map.push([xOfPulsesPixel, yOfPulsesPixel, width, heigth]);
+        //             }
+        //             widthPulse = 0;
+        //             heightPulse += border + heigth;
+        //         }
                 
-                widthSeparation += widthPerMeasure + margin + separation;
-            }
-        }
+        //         widthSeparation += widthPerMeasure + margin + separation;
+        //     }
+        // }
 
-        return map;
+        // return map;
     }
 
     getMeasuresMap() {
