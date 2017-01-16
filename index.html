@@ -1,0 +1,26 @@
+<html>
+    <head>
+        <style>
+            body {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="canvas" tabindex="1"></canvas>
+
+        <script src="billy.js"></script>
+        <script type="text/javascript">
+            var measures = [
+                new measure(4, 1),
+                new measure(4, 1),
+                new measure(4, 1),
+                new measure(4, 1),
+                new measure(4, 1),
+            ];
+
+            var cvs = new billy(new parameters(), measures);
+            cvs.draw();
+        </script>
+    </body>
+</html>
