@@ -1,4 +1,9 @@
-//DESLOCAMENTO / WIDTH DO QUADRADO
+// atalhos:
+// shift + click: joga no array de seleções o quadrado selecionado
+// shift + drag: joga no array de seleções os quadrados selecionados
+// ctrl + c / v: copia e cola
+// ctrl + shift + seta: aumenta mais um na direção
+// ctrl + shift + alt + number: transforma o motif
 var billy = (function () {
     function billy(selector, config, measures) {
         this._isDragging = false;
@@ -19,14 +24,38 @@ var billy = (function () {
         }
         var that = this;
         this._canvas = document.getElementById(selector);
-        this._canvas.addEventListener('click', function (e) { that.handleClick(e); });
-        this._canvas.addEventListener('keydown', function (e) { that.handleKeyDown(e); });
-        this._canvas.addEventListener('keyup', function (e) { that.handleKeyUp(e); });
-        this._canvas.addEventListener('mousedown', function (e) { that.handleMouseDown(e); });
-        this._canvas.addEventListener('mouseup', function (e) { that.handleMouseUp(e); });
-        this._canvas.addEventListener('mousemove', function (e) { that.handleMouseMove(e); });
-        this._canvas.addEventListener('mouseout', function (e) { that.handleMouseOut(e); });
-        this._canvas.addEventListener('contextmenu', function (e) { that.handleContextMenu(e); }, false);
+        this._canvas.addEventListener('click', function (e) {
+            that.handleClick(e);
+            console.log('click handle called.');
+        });
+        this._canvas.addEventListener('keydown', function (e) {
+            that.handleKeyDown(e);
+            console.log('keydown handle called.');
+        });
+        this._canvas.addEventListener('keyup', function (e) {
+            that.handleKeyUp(e);
+            console.log('keyup handle called.');
+        });
+        this._canvas.addEventListener('mousedown', function (e) {
+            that.handleMouseDown(e);
+            console.log('mousedown handle called.');
+        });
+        this._canvas.addEventListener('mouseup', function (e) {
+            that.handleMouseUp(e);
+            console.log('mouseup handle called.');
+        });
+        this._canvas.addEventListener('mousemove', function (e) {
+            that.handleMouseMove(e);
+            console.log('mousemove handle called.');
+        });
+        this._canvas.addEventListener('mouseout', function (e) {
+            that.handleMouseOut(e);
+            console.log('mouseout handle called.');
+        });
+        this._canvas.addEventListener('contextmenu', function (e) {
+            that.handleContextMenu(e);
+            console.log('contextmenu handle called.');
+        }, false);
         this._canvas.oncontextmenu = function (e) {
             e.preventDefault();
         };
@@ -34,11 +63,13 @@ var billy = (function () {
         var maxWidth = this._canvas.parentElement.offsetWidth - this._canvas.parentElement.offsetWidth * factor;
         var maxHeigth = (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)) + this._configuration._margin * 2;
         window.addEventListener('resize', function () {
+            // é necessário recalcular porque a janela sofreu um resize
             that._canvas.width = that._canvas.parentElement.offsetWidth - that._canvas.parentElement.offsetWidth * factor;
             that._canvas.height = maxHeigth;
             that._offsetX = 0;
             that._offsetY = 0;
             that.draw();
+            console.log('resize handle called.');
         });
         this._canvas.width = maxWidth;
         this._canvas.height = maxHeigth;
@@ -77,23 +108,63 @@ var billy = (function () {
         context.closePath();
         context.stroke();
         this._measuresWidth = x;
+        this._blocks = this.blocks();
+        for (var _i = 0, _a = this._blocks; _i < _a.length; _i++) {
+            var block_1 = _a[_i];
+            context.fillStyle = this._configuration._backgroundColor;
+            context.fillRect(block_1._x, block_1._y, block_1._width, block_1._height);
+        }
+    };
+    billy.prototype.blocks = function () {
+        // preenchimento da matriz:
+        // ------------------------------ ------------------------------
+        // --  1  --  2  --  3  --  4  -- --  13 --  14 --  15 --  16 --
+        // ------------------------------ ------------------------------
+        // --  5  --  6  --  7  --  8  -- --  17 --  18 --  19 --  20 --
+        // ------------------------------ ------------------------------
+        // --  9  --  10 --  11 --  12 -- --  21 --  22 --  23 --  24 --
+        // ------------------------------ ------------------------------
+        var marginAndBorder = this._configuration._margin + this._configuration._border;
+        var widthAndBorder = this._configuration._width + this._configuration._border;
+        var heigthAndBorder = this._configuration._heigth + this._configuration._border;
+        var marginAndSeparation = this._configuration._margin + this._configuration._separation;
+        var heigthFrequencies = marginAndBorder;
+        this._blocks = new Array();
+        var aux = 0;
+        for (var i = 0; i <= this._measures.length - 1; i++) {
+            var measure_1 = this._measures[i];
+            var pulsesAndRhythm = measure_1._pulses * measure_1._rhythm;
+            aux += ((pulsesAndRhythm * this._configuration._width) + (pulsesAndRhythm * this._configuration._border) + marginAndSeparation);
+            for (var w = 0; w <= this._configuration._frequencies - 1; w++) {
+                var widthPulses = marginAndBorder;
+                this._blocks.push(new block(widthPulses + aux - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
+                for (var z = 1; z <= pulsesAndRhythm - 1; z++) {
+                    widthPulses += widthAndBorder;
+                    this._blocks.push(new block(widthPulses + aux - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
+                }
+                heigthFrequencies += heigthAndBorder;
+            }
+            //aux += widthMeasure;
+            heigthFrequencies = marginAndBorder;
+        }
+        return this._blocks;
     };
     billy.prototype.handleClick = function (e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
     };
     billy.prototype.handleKeyDown = function (e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
     };
     billy.prototype.handleKeyUp = function (e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         this._isDragging = false;
     };
     billy.prototype.handleMouseDown = function (e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         document.body.style.cursor = 'pointer';
         var rect = this._canvas.getBoundingClientRect();
         var x = e.clientX - rect.left;
@@ -103,21 +174,20 @@ var billy = (function () {
         this._isDragging = true;
     };
     billy.prototype.handleMouseUp = function (e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         document.body.style.cursor = 'default';
         this._isDragging = false;
     };
     billy.prototype.handleMouseOut = function (e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         document.body.style.cursor = 'default';
     };
     billy.prototype.handleMouseMove = function (e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         if (this._isDragging) {
-            document.body.style.cursor = 'move';
             var rect = this._canvas.getBoundingClientRect();
             var x = e.clientX - rect.left;
             var y = e.clientY - rect.top;
@@ -139,35 +209,10 @@ var billy = (function () {
             var context = this._canvas.getContext("2d");
             context.clearRect(0, 0, this._canvas.width, this._canvas.height);
             this.draw();
-        }
-        else {
-            document.body.style.cursor = 'pointer';
+            console.log('offset:' + this._offsetX);
         }
     };
     billy.prototype.handleContextMenu = function (e) {
-    };
-    billy.prototype.getBlocks = function () {
-        // var widthSeparation = 0;
-        // var widthPulse = 0;
-        // var heightPulse = 0;
-        // if (map.length == 0) {
-        //     for(var i = 0; i <= measures - 1; i++) {
-        //         heightPulse = 0;
-        //         var aux = 0;
-        //         for(var x = 0; x <= frequencies - 1; x++) {
-        //             var yOfPulsesPixel = margin + border + heightPulse;
-        //             for(var y = 0; y <= pulses - 1; y++) {
-        //                 var xOfPulsesPixel = margin + border + widthPulse + widthSeparation;
-        //                 widthPulse += border + width;
-        //                 map.push([xOfPulsesPixel, yOfPulsesPixel, width, heigth]);
-        //             }
-        //             widthPulse = 0;
-        //             heightPulse += border + heigth;
-        //         }
-        //         widthSeparation += widthPerMeasure + margin + separation;
-        //     }
-        // }
-        // return map;
     };
     billy.prototype.getMeasures = function () {
     };

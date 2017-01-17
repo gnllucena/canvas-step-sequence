@@ -1,4 +1,9 @@
-//DESLOCAMENTO / WIDTH DO QUADRADO
+// atalhos:
+// shift + click: joga no array de seleções o quadrado selecionado
+// shift + drag: joga no array de seleções os quadrados selecionados
+// ctrl + c / v: copia e cola
+// ctrl + shift + seta: aumenta mais um na direção
+// ctrl + shift + alt + number: transforma o motif
 
 class billy {
     _canvas : HTMLCanvasElement;
@@ -44,14 +49,45 @@ class billy {
 
         this._canvas = <HTMLCanvasElement> document.getElementById(selector);
     
-        this._canvas.addEventListener('click', function(e) { that.handleClick(e); });
-        this._canvas.addEventListener('keydown', function(e) { that.handleKeyDown(e); });
-        this._canvas.addEventListener('keyup', function(e) { that.handleKeyUp(e); });
-        this._canvas.addEventListener('mousedown', function(e) { that.handleMouseDown(e); });
-        this._canvas.addEventListener('mouseup', function(e) { that.handleMouseUp(e); });
-        this._canvas.addEventListener('mousemove', function(e) { that.handleMouseMove(e); });
-        this._canvas.addEventListener('mouseout', function(e) { that.handleMouseOut(e); });
-        this._canvas.addEventListener('contextmenu', function(e) { that.handleContextMenu(e); }, false);
+        this._canvas.addEventListener('click', function(e) { 
+            that.handleClick(e); 
+            console.log('click handle called.');
+        });
+        
+        this._canvas.addEventListener('keydown', function(e) { 
+            that.handleKeyDown(e); 
+            console.log('keydown handle called.');
+        });
+
+        this._canvas.addEventListener('keyup', function(e) { 
+            that.handleKeyUp(e); 
+            console.log('keyup handle called.');
+        });
+
+        this._canvas.addEventListener('mousedown', function(e) { 
+            that.handleMouseDown(e);
+            console.log('mousedown handle called.');
+        });
+
+        this._canvas.addEventListener('mouseup', function(e) { 
+            that.handleMouseUp(e); 
+            console.log('mouseup handle called.');
+        });
+
+        this._canvas.addEventListener('mousemove', function(e) { 
+            that.handleMouseMove(e); 
+            console.log('mousemove handle called.');
+        });
+
+        this._canvas.addEventListener('mouseout', function(e) { 
+            that.handleMouseOut(e);
+            console.log('mouseout handle called.');
+        });
+        
+        this._canvas.addEventListener('contextmenu', function(e) { 
+            that.handleContextMenu(e); 
+            console.log('contextmenu handle called.');
+        }, false);
 
         this._canvas.oncontextmenu = function (e) {
             e.preventDefault();
@@ -62,6 +98,7 @@ class billy {
         let maxHeigth = (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)) + this._configuration._margin * 2;
         
         window.addEventListener('resize', function() {
+            // é necessário recalcular porque a janela sofreu um resize
             that._canvas.width = that._canvas.parentElement.offsetWidth - that._canvas.parentElement.offsetWidth * factor;
             that._canvas.height = maxHeigth;
 
@@ -69,6 +106,7 @@ class billy {
             that._offsetY = 0;
 
             that.draw();
+            console.log('resize handle called.');
         });
 
         this._canvas.width = maxWidth;
@@ -121,79 +159,85 @@ class billy {
         context.stroke();
 
         this._measuresWidth = x;
+
+        this._blocks = this.blocks();
+
+        for (let block of this._blocks) {
+            context.fillStyle = this._configuration._backgroundColor;
+            context.fillRect(block._x, block._y, block._width, block._height);
+        }
     }
 
     blocks() {
-        let widthPulses = this._configuration._margin + this._configuration._border;
-        let heigthFrequencies = this._configuration._margin + this._configuration._border;
+        // preenchimento da matriz:
+        // ------------------------------ ------------------------------
+        // --  1  --  2  --  3  --  4  -- --  13 --  14 --  15 --  16 --
+        // ------------------------------ ------------------------------
+        // --  5  --  6  --  7  --  8  -- --  17 --  18 --  19 --  20 --
+        // ------------------------------ ------------------------------
+        // --  9  --  10 --  11 --  12 -- --  21 --  22 --  23 --  24 --
+        // ------------------------------ ------------------------------
+
+        let marginAndBorder = this._configuration._margin + this._configuration._border;
+        let widthAndBorder = this._configuration._width + this._configuration._border;
+        let heigthAndBorder = this._configuration._heigth + this._configuration._border;
+        let marginAndSeparation = this._configuration._margin + this._configuration._separation;
+
+        let heigthFrequencies = marginAndBorder;
 
         this._blocks = new Array<block>();
 
-        for (let measure of this._measures) {
-            for (let i = 0; i <= measure._pulses * measure._rhythm; i++) {
-                this._blocks.push(new block(widthPulses, heigthFrequencies, this._configuration._width, this._configuration._heigth));
+        let aux = 0;
 
-                for (let w = 0; w <= this._configuration._frequencies; w++) {
-                    this._blocks.push(new block(widthPulses, heigthFrequencies, this._configuration._width, this._configuration._heigth));
+        for (let i = 0; i <= this._measures.length - 1; i++) {
+            let measure = this._measures[i];
+            
+            let pulsesAndRhythm = measure._pulses * measure._rhythm;
 
-                    heigthFrequencies += this._configuration._border;
+            aux += ((pulsesAndRhythm * this._configuration._width) + (pulsesAndRhythm * this._configuration._border) +  marginAndSeparation);
+            
+            for (let w = 0; w <= this._configuration._frequencies - 1; w++) {
+                let widthPulses = marginAndBorder;
+
+                this._blocks.push(new block(widthPulses + aux - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
+
+                for (let z = 1; z <= pulsesAndRhythm - 1; z++) {
+                    widthPulses += widthAndBorder;
+
+                    this._blocks.push(new block(widthPulses + aux - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
                 }
 
-                widthPulses += this._configuration._border;
+                heigthFrequencies += heigthAndBorder;
             }
 
-            widthPulses += this._configuration._separation;
-            heigthFrequencies = this._configuration._margin + this._configuration._border;
+            //aux += widthMeasure;
+
+            heigthFrequencies = marginAndBorder;
         }
 
-        // var widthSeparation = 0;
-        // var widthPulse = 0;
-        // var heightPulse = 0;
-        
-        // if (map.length == 0) {
-        //     for(var i = 0; i <= measures - 1; i++) {
-        //         heightPulse = 0;
-        //         var aux = 0;
-        //         for(var x = 0; x <= frequencies - 1; x++) {
-        //             var yOfPulsesPixel = margin + border + heightPulse;
-        //             for(var y = 0; y <= pulses - 1; y++) {
-        //                 var xOfPulsesPixel = margin + border + widthPulse + widthSeparation;
-                        
-        //                 widthPulse += border + width;
-                        
-        //                 map.push([xOfPulsesPixel, yOfPulsesPixel, width, heigth]);
-        //             }
-        //             widthPulse = 0;
-        //             heightPulse += border + heigth;
-        //         }
-                
-        //         widthSeparation += widthPerMeasure + margin + separation;
-        //     }
-        // }
-
-        // return map;
+        return this._blocks;
     }
 
     handleClick(e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     handleKeyDown(e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     handleKeyUp(e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
         this._isDragging = false;
     }
 
     handleMouseDown(e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
         document.body.style.cursor = 'pointer';
 
@@ -208,8 +252,8 @@ class billy {
     }
 
     handleMouseUp(e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
         document.body.style.cursor = 'default';
 
@@ -217,19 +261,17 @@ class billy {
     }
 
     handleMouseOut(e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
         document.body.style.cursor = 'default';
     }
 
     handleMouseMove(e) {
-        // e.preventDefault();
-        // e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
         if (this._isDragging) {
-            document.body.style.cursor = 'move';
-            
             var rect = this._canvas.getBoundingClientRect();
 
             let x = e.clientX - rect.left;
@@ -257,16 +299,13 @@ class billy {
             context.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
             this.draw();
-        }
-        else {
-            document.body.style.cursor = 'pointer';
+
+            console.log('offset:' + this._offsetX);
         }
     }
 
     handleContextMenu(e) {
-    }
-
-    
+    }   
 
     getMeasures() {
     }
