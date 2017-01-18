@@ -83,27 +83,35 @@ var billy = (function () {
         var x = this._configuration._margin;
         var y = this._configuration._margin;
         context.beginPath();
+        var heigthTimesFrequencies = this._configuration._heigth * this._configuration._frequencies;
+        var blocksTimesBorder = this._configuration._border * (this._configuration._frequencies + 1);
+        var yofY = y + heigthTimesFrequencies + blocksTimesBorder;
         for (var i = 0; i <= this._measures.length - 1; i++) {
-            context.moveTo(x, y);
+            var measure_1 = this._measures[i];
+            var pulsesTimeRhythm = measure_1._pulses * measure_1._rhythm;
+            var usefulMeasureArea = pulsesTimeRhythm * this._configuration._width + pulsesTimeRhythm * this._configuration._border;
+            var xofX = x + usefulMeasureArea + this._configuration._border;
             // x
             for (var w = 0; w <= this._configuration._frequencies; w++) {
                 var line = w == 0 ? 0 : this._configuration._border;
+                line += this._configuration._heigth;
                 for (var z = 0; z <= this._configuration._border; z++) {
-                    var asdfasdfa = y + (this._configuration._heigth + line) * w + z;
-                    context.moveTo(x - this._offsetX, asdfasdfa);
-                    context.lineTo(x + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._border - this._offsetX, asdfasdfa);
+                    var yofX = line * w + y + z;
+                    context.moveTo(x - this._offsetX, yofX);
+                    context.lineTo(xofX - this._offsetX, yofX);
                 }
             }
             // y
-            for (var w = 0; w <= this._measures[i]._pulses * this._measures[i]._rhythm; w++) {
+            for (var w = 0; w <= pulsesTimeRhythm; w++) {
                 var line = w == 0 ? 0 : this._configuration._border;
+                line += this._configuration._width;
                 for (var z = 0; z <= this._configuration._border; z++) {
-                    var asdfasdf = x + (this._configuration._width + line) * w + z - this._offsetX;
-                    context.moveTo(asdfasdf, y);
-                    context.lineTo(asdfasdf, y + (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)));
+                    var xofY = line * w + x + z - this._offsetX;
+                    context.moveTo(xofY, y);
+                    context.lineTo(xofY, yofY);
                 }
             }
-            x += this._configuration._margin + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._separation;
+            x += usefulMeasureArea + this._configuration._margin + this._configuration._separation;
         }
         context.strokeStyle = this._configuration._borderColor;
         context.closePath();
@@ -132,19 +140,19 @@ var billy = (function () {
         var marginAndSeparation = this._configuration._margin + this._configuration._separation;
         var heigthFrequencies = marginAndBorder;
         for (var i = 0; i <= this._measures.length - 1; i++) {
-            var measure_1 = this._measures[i];
-            var pulsesAndRhythm = measure_1._pulses * measure_1._rhythm;
+            var measure_2 = this._measures[i];
+            var pulsesTimesRhythm = measure_2._pulses * measure_2._rhythm;
             for (var w = 0; w <= this._configuration._frequencies - 1; w++) {
                 var widthPulses = this._widthMeasures + marginAndBorder;
                 this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
-                for (var z = 1; z <= pulsesAndRhythm - 1; z++) {
+                for (var z = 1; z <= pulsesTimesRhythm - 1; z++) {
                     widthPulses += widthAndBorder;
                     this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
                 }
                 heigthFrequencies += heigthAndBorder;
             }
             heigthFrequencies = marginAndBorder;
-            this._widthMeasures += (pulsesAndRhythm * this._configuration._width) + ((pulsesAndRhythm * this._configuration._border)) + marginAndSeparation;
+            this._widthMeasures += (pulsesTimesRhythm * this._configuration._width) + ((pulsesTimesRhythm * this._configuration._border)) + marginAndSeparation;
         }
         // Because we don't have a separation in the end
         this._widthMeasures = this._widthMeasures - this._configuration._separation + this._configuration._border;

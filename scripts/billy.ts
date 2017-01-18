@@ -125,35 +125,49 @@ class billy {
         let y = this._configuration._margin;
 
         context.beginPath();
+        
+        let heigthTimesFrequencies = this._configuration._heigth * this._configuration._frequencies;
+        let blocksTimesBorder = this._configuration._border * (this._configuration._frequencies + 1);
+        
+        let yofY = y + heigthTimesFrequencies + blocksTimesBorder;
 
-        for (let i = 0; i <= this._measures.length - 1; i++) {            
-            context.moveTo(x, y);
+        for (let i = 0; i <= this._measures.length - 1; i++) {
+            let measure = this._measures[i];
 
+            let pulsesTimeRhythm = measure._pulses * measure._rhythm;
+            let usefulMeasureArea = pulsesTimeRhythm * this._configuration._width + pulsesTimeRhythm * this._configuration._border;
+
+            let xofX = x + usefulMeasureArea + this._configuration._border;
+        
             // x
             for(let w = 0; w <= this._configuration._frequencies; w++) {
                 let line = w == 0 ? 0 : this._configuration._border;
 
-                for (let z = 0; z <= this._configuration._border; z++) {
-                    let asdfasdfa = y + (this._configuration._heigth + line) * w + z;
+                line += this._configuration._heigth;
 
-                    context.moveTo(x - this._offsetX, asdfasdfa);
-                    context.lineTo(x + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._border - this._offsetX, asdfasdfa);
+                for (let z = 0; z <= this._configuration._border; z++) {
+                    let yofX = line * w + y + z;
+
+                    context.moveTo(x - this._offsetX, yofX);
+                    context.lineTo(xofX - this._offsetX, yofX);
                 }
             }
             
             // y
-            for(let w = 0; w <= this._measures[i]._pulses * this._measures[i]._rhythm; w++) {
+            for(let w = 0; w <= pulsesTimeRhythm; w++) {
                 let line = w == 0 ? 0 : this._configuration._border;
 
-                for (let z = 0; z <= this._configuration._border; z++) {
-                    let asdfasdf = x + (this._configuration._width + line) * w + z - this._offsetX;
+                line += this._configuration._width;
 
-                    context.moveTo(asdfasdf, y);
-                    context.lineTo(asdfasdf, y + (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)));
+                for (let z = 0; z <= this._configuration._border; z++) {
+                    let xofY = line * w + x + z - this._offsetX;
+
+                    context.moveTo(xofY, y);
+                    context.lineTo(xofY, yofY);
                 }
             }
 
-            x += this._configuration._margin + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._separation;
+            x += usefulMeasureArea + this._configuration._margin + this._configuration._separation;
         }
 
         context.strokeStyle = this._configuration._borderColor;
@@ -191,14 +205,14 @@ class billy {
         for (let i = 0; i <= this._measures.length - 1; i++) {
             let measure = this._measures[i];
             
-            let pulsesAndRhythm = measure._pulses * measure._rhythm;
+            let pulsesTimesRhythm = measure._pulses * measure._rhythm;
 
             for (let w = 0; w <= this._configuration._frequencies - 1; w++) {
                 let widthPulses = this._widthMeasures + marginAndBorder;
 
                 this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
 
-                for (let z = 1; z <= pulsesAndRhythm - 1; z++) {
+                for (let z = 1; z <= pulsesTimesRhythm - 1; z++) {
                     widthPulses += widthAndBorder;
 
                     this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
@@ -209,7 +223,7 @@ class billy {
 
             heigthFrequencies = marginAndBorder;
 
-            this._widthMeasures += (pulsesAndRhythm * this._configuration._width) + ((pulsesAndRhythm * this._configuration._border)) + marginAndSeparation;
+            this._widthMeasures += (pulsesTimesRhythm * this._configuration._width) + ((pulsesTimesRhythm * this._configuration._border)) + marginAndSeparation;
         }
 
         // Because we don't have a separation in the end
