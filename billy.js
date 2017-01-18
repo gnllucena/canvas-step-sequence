@@ -15,8 +15,8 @@ var billy = (function () {
         this._isRigthArrowPressed = false;
         this._offsetX = 0;
         this._offsetY = 0;
-        this._measuresWidth = 0;
-        this._measuresHeight = 0;
+        this._widthMeasures = 0;
+        this._heigthMeasures = 0;
         this._measures = measures;
         this._configuration = new configuration(config._frequencies, config._margin, config._width, config._heigth, config._border, config._separation, config._backgroundColor, config._borderColor, config._shortcuts);
         if (this._configuration._shortcuts == null) {
@@ -107,7 +107,7 @@ var billy = (function () {
         context.strokeStyle = this._configuration._borderColor;
         context.closePath();
         context.stroke();
-        this._measuresWidth = x;
+        this._widthMeasures = x;
         this._blocks = this.blocks();
         for (var _i = 0, _a = this._blocks; _i < _a.length; _i++) {
             var block_1 = _a[_i];
@@ -116,7 +116,7 @@ var billy = (function () {
         }
     };
     billy.prototype.blocks = function () {
-        // preenchimento da matriz:
+        // matrix read:
         // ------------------------------ ------------------------------
         // --  1  --  2  --  3  --  4  -- --  13 --  14 --  15 --  16 --
         // ------------------------------ ------------------------------
@@ -124,28 +124,27 @@ var billy = (function () {
         // ------------------------------ ------------------------------
         // --  9  --  10 --  11 --  12 -- --  21 --  22 --  23 --  24 --
         // ------------------------------ ------------------------------
+        this._widthMeasures = 0;
+        this._blocks = new Array();
         var marginAndBorder = this._configuration._margin + this._configuration._border;
         var widthAndBorder = this._configuration._width + this._configuration._border;
         var heigthAndBorder = this._configuration._heigth + this._configuration._border;
         var marginAndSeparation = this._configuration._margin + this._configuration._separation;
         var heigthFrequencies = marginAndBorder;
-        this._blocks = new Array();
-        var aux = 0;
         for (var i = 0; i <= this._measures.length - 1; i++) {
             var measure_1 = this._measures[i];
             var pulsesAndRhythm = measure_1._pulses * measure_1._rhythm;
-            aux += ((pulsesAndRhythm * this._configuration._width) + (pulsesAndRhythm * this._configuration._border) + marginAndSeparation);
             for (var w = 0; w <= this._configuration._frequencies - 1; w++) {
-                var widthPulses = marginAndBorder;
-                this._blocks.push(new block(widthPulses + aux - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
+                var widthPulses = this._widthMeasures + marginAndBorder;
+                this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
                 for (var z = 1; z <= pulsesAndRhythm - 1; z++) {
                     widthPulses += widthAndBorder;
-                    this._blocks.push(new block(widthPulses + aux - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
+                    this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
                 }
                 heigthFrequencies += heigthAndBorder;
             }
-            //aux += widthMeasure;
             heigthFrequencies = marginAndBorder;
+            this._widthMeasures += (pulsesAndRhythm * this._configuration._width) + ((pulsesAndRhythm * this._configuration._border)) + marginAndSeparation;
         }
         return this._blocks;
     };
@@ -194,14 +193,14 @@ var billy = (function () {
             this._offsetX += (x - this._mouseX) * -1;
             this._offsetY += (y - this._mouseY) * -1;
             // as medidas, quando maiores que o tamanho do canvas, não devem ultrapassar os limites do canvas
-            if (this._offsetX > this._measuresWidth - this._canvas.width - this._configuration._separation) {
-                this._offsetX = this._measuresWidth - this._canvas.width - this._configuration._separation + this._configuration._border;
+            if (this._offsetX > this._widthMeasures - this._canvas.width - this._configuration._separation) {
+                this._offsetX = this._widthMeasures - this._canvas.width - this._configuration._separation + this._configuration._border;
             }
             else if (this._offsetX < 1) {
                 this._offsetX = 0;
             }
             // caso as medidas somadas sejam menores que o tamanho do canvas, as medidas devem sempre encostar na esquerda
-            if (this._measuresWidth < this._canvas.width) {
+            if (this._widthMeasures < this._canvas.width) {
                 this._offsetX = 0;
             }
             this._mouseX = x;

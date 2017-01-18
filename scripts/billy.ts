@@ -24,8 +24,8 @@ class billy {
     _mouseX: number;
     _mouseY: number;
 
-    _measuresWidth: number = 0;
-    _measuresHeight: number = 0;
+    _widthMeasures: number = 0;
+    _heigthMeasures: number = 0;
 
     constructor(selector: string, config: configuration, measures: Array<measure>) {
         this._measures = measures;
@@ -158,7 +158,7 @@ class billy {
         context.closePath();
         context.stroke();
 
-        this._measuresWidth = x;
+        this._widthMeasures = x;
 
         this._blocks = this.blocks();
 
@@ -169,7 +169,7 @@ class billy {
     }
 
     blocks() {
-        // preenchimento da matriz:
+        // matrix read:
         // ------------------------------ ------------------------------
         // --  1  --  2  --  3  --  4  -- --  13 --  14 --  15 --  16 --
         // ------------------------------ ------------------------------
@@ -177,6 +177,8 @@ class billy {
         // ------------------------------ ------------------------------
         // --  9  --  10 --  11 --  12 -- --  21 --  22 --  23 --  24 --
         // ------------------------------ ------------------------------
+        this._widthMeasures = 0;
+        this._blocks = new Array<block>();
 
         let marginAndBorder = this._configuration._margin + this._configuration._border;
         let widthAndBorder = this._configuration._width + this._configuration._border;
@@ -185,34 +187,28 @@ class billy {
 
         let heigthFrequencies = marginAndBorder;
 
-        this._blocks = new Array<block>();
-
-        let aux = 0;
-
         for (let i = 0; i <= this._measures.length - 1; i++) {
             let measure = this._measures[i];
             
             let pulsesAndRhythm = measure._pulses * measure._rhythm;
 
-            aux += ((pulsesAndRhythm * this._configuration._width) + (pulsesAndRhythm * this._configuration._border) +  marginAndSeparation);
-            
             for (let w = 0; w <= this._configuration._frequencies - 1; w++) {
-                let widthPulses = marginAndBorder;
+                let widthPulses = this._widthMeasures + marginAndBorder;
 
-                this._blocks.push(new block(widthPulses + aux - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
+                this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
 
                 for (let z = 1; z <= pulsesAndRhythm - 1; z++) {
                     widthPulses += widthAndBorder;
 
-                    this._blocks.push(new block(widthPulses + aux - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
+                    this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth));
                 }
 
                 heigthFrequencies += heigthAndBorder;
             }
 
-            //aux += widthMeasure;
-
             heigthFrequencies = marginAndBorder;
+
+            this._widthMeasures += (pulsesAndRhythm * this._configuration._width) + ((pulsesAndRhythm * this._configuration._border)) + marginAndSeparation;
         }
 
         return this._blocks;
@@ -281,14 +277,14 @@ class billy {
             this._offsetY += (y - this._mouseY) * -1;
 
             // as medidas, quando maiores que o tamanho do canvas, não devem ultrapassar os limites do canvas
-            if (this._offsetX > this._measuresWidth - this._canvas.width - this._configuration._separation) {
-                this._offsetX = this._measuresWidth - this._canvas.width - this._configuration._separation + this._configuration._border;
+            if (this._offsetX > this._widthMeasures - this._canvas.width - this._configuration._separation) {
+                this._offsetX = this._widthMeasures - this._canvas.width - this._configuration._separation + this._configuration._border;
             } else if (this._offsetX < 1) {
                 this._offsetX = 0;
             }
 
             // caso as medidas somadas sejam menores que o tamanho do canvas, as medidas devem sempre encostar na esquerda
-            if (this._measuresWidth < this._canvas.width) {
+            if (this._widthMeasures < this._canvas.width) {
                 this._offsetX = 0;
             }
 
