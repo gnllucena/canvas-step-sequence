@@ -1,4 +1,8 @@
-// atalhos:
+// playback:
+// linha vertical do play vai até 50% do canvas 
+// canvas começa a deslizar até o final
+// linha vertical do play vai até 100% do canvas
+// shortcuts:
 // shift + click: joga no array de seleções o quadrado selecionado
 // shift + drag: joga no array de seleções os quadrados selecionados
 // ctrl + c / v: copia e cola
@@ -63,7 +67,7 @@ var billy = (function () {
         var maxWidth = this._canvas.parentElement.offsetWidth - this._canvas.parentElement.offsetWidth * factor;
         var maxHeigth = (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)) + this._configuration._margin * 2;
         window.addEventListener('resize', function () {
-            // é necessário recalcular porque a janela sofreu um resize
+            // It's necessáry to recalculate the canvas width everytime the window is resized
             that._canvas.width = that._canvas.parentElement.offsetWidth - that._canvas.parentElement.offsetWidth * factor;
             that._canvas.height = maxHeigth;
             that._offsetX = 0;
@@ -75,11 +79,6 @@ var billy = (function () {
         this._canvas.height = maxHeigth;
     }
     billy.prototype.draw = function () {
-        var width = 0;
-        for (var i = 0; i <= this._measures.length - 1; i++) {
-            var pulses = this._measures[i]._pulses * this._measures[i]._rhythm;
-            width += (pulses * this._configuration._width) + (pulses * this._configuration._border) + this._configuration._margin + this._configuration._separation;
-        }
         var context = this._canvas.getContext("2d");
         var x = this._configuration._margin;
         var y = this._configuration._margin;
@@ -90,16 +89,18 @@ var billy = (function () {
             for (var w = 0; w <= this._configuration._frequencies; w++) {
                 var line = w == 0 ? 0 : this._configuration._border;
                 for (var z = 0; z <= this._configuration._border; z++) {
-                    context.moveTo(x - this._offsetX, y + (this._configuration._heigth + line) * w + z);
-                    context.lineTo(x + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._border - this._offsetX, y + (this._configuration._heigth + line) * w + z);
+                    var asdfasdfa = y + (this._configuration._heigth + line) * w + z;
+                    context.moveTo(x - this._offsetX, asdfasdfa);
+                    context.lineTo(x + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._border - this._offsetX, asdfasdfa);
                 }
             }
             // y
             for (var w = 0; w <= this._measures[i]._pulses * this._measures[i]._rhythm; w++) {
                 var line = w == 0 ? 0 : this._configuration._border;
                 for (var z = 0; z <= this._configuration._border; z++) {
-                    context.moveTo(x + (this._configuration._width + line) * w + z - this._offsetX, y);
-                    context.lineTo(x + (this._configuration._width + line) * w + z - this._offsetX, y + (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)));
+                    var asdfasdf = x + (this._configuration._width + line) * w + z - this._offsetX;
+                    context.moveTo(asdfasdf, y);
+                    context.lineTo(asdfasdf, y + (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)));
                 }
             }
             x += this._configuration._margin + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._separation;
@@ -107,7 +108,6 @@ var billy = (function () {
         context.strokeStyle = this._configuration._borderColor;
         context.closePath();
         context.stroke();
-        this._widthMeasures = x;
         this._blocks = this.blocks();
         for (var _i = 0, _a = this._blocks; _i < _a.length; _i++) {
             var block_1 = _a[_i];
@@ -116,14 +116,14 @@ var billy = (function () {
         }
     };
     billy.prototype.blocks = function () {
-        // matrix read:
-        // ------------------------------ ------------------------------
-        // --  1  --  2  --  3  --  4  -- --  13 --  14 --  15 --  16 --
-        // ------------------------------ ------------------------------
-        // --  5  --  6  --  7  --  8  -- --  17 --  18 --  19 --  20 --
-        // ------------------------------ ------------------------------
-        // --  9  --  10 --  11 --  12 -- --  21 --  22 --  23 --  24 --
-        // ------------------------------ ------------------------------
+        // How canvas matrix is read
+        // ------------------------------ ---------------- --------
+        // --  1  --  2  --  3  --  4  -- --  13 --  14 -- -- 19 --
+        // ------------------------------ ---------------- --------
+        // --  5  --  6  --  7  --  8  -- --  15 --  16 -- -- 20 --
+        // ------------------------------ ---------------- --------
+        // --  9  --  10 --  11 --  12 -- --  17 --  18 -- -- 21 --
+        // ------------------------------ ---------------- --------
         this._widthMeasures = 0;
         this._blocks = new Array();
         var marginAndBorder = this._configuration._margin + this._configuration._border;
@@ -146,6 +146,8 @@ var billy = (function () {
             heigthFrequencies = marginAndBorder;
             this._widthMeasures += (pulsesAndRhythm * this._configuration._width) + ((pulsesAndRhythm * this._configuration._border)) + marginAndSeparation;
         }
+        // Because we don't have a separation in the end
+        this._widthMeasures = this._widthMeasures - this._configuration._separation + this._configuration._border;
         return this._blocks;
     };
     billy.prototype.handleClick = function (e) {
@@ -162,8 +164,8 @@ var billy = (function () {
         this._isDragging = false;
     };
     billy.prototype.handleMouseDown = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+        // e.preventDefault();
+        // e.stopPropagation();
         document.body.style.cursor = 'pointer';
         var rect = this._canvas.getBoundingClientRect();
         var x = e.clientX - rect.left;

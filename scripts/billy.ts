@@ -1,4 +1,9 @@
-// atalhos:
+// playback:
+// linha vertical do play vai até 50% do canvas 
+// canvas começa a deslizar até o final
+// linha vertical do play vai até 100% do canvas
+
+// shortcuts:
 // shift + click: joga no array de seleções o quadrado selecionado
 // shift + drag: joga no array de seleções os quadrados selecionados
 // ctrl + c / v: copia e cola
@@ -98,7 +103,7 @@ class billy {
         let maxHeigth = (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)) + this._configuration._margin * 2;
         
         window.addEventListener('resize', function() {
-            // é necessário recalcular porque a janela sofreu um resize
+            // It's necessáry to recalculate the canvas width everytime the window is resized
             that._canvas.width = that._canvas.parentElement.offsetWidth - that._canvas.parentElement.offsetWidth * factor;
             that._canvas.height = maxHeigth;
 
@@ -114,13 +119,6 @@ class billy {
     }
 
     draw() {
-        let width = 0;
-        for(let i = 0; i <= this._measures.length - 1; i++) {
-            let pulses = this._measures[i]._pulses * this._measures[i]._rhythm;
-
-            width += (pulses * this._configuration._width) + (pulses * this._configuration._border) + this._configuration._margin + this._configuration._separation;
-        }
-
         let context = this._canvas.getContext("2d");
 
         let x = this._configuration._margin;
@@ -136,8 +134,10 @@ class billy {
                 let line = w == 0 ? 0 : this._configuration._border;
 
                 for (let z = 0; z <= this._configuration._border; z++) {
-                    context.moveTo(x - this._offsetX, y + (this._configuration._heigth + line) * w + z);
-                    context.lineTo(x + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._border - this._offsetX, y + (this._configuration._heigth + line) * w + z);
+                    let asdfasdfa = y + (this._configuration._heigth + line) * w + z;
+
+                    context.moveTo(x - this._offsetX, asdfasdfa);
+                    context.lineTo(x + (this._configuration._width * this._measures[i]._pulses * this._measures[i]._rhythm) + (this._configuration._border * this._measures[i]._pulses * this._measures[i]._rhythm) + this._configuration._border - this._offsetX, asdfasdfa);
                 }
             }
             
@@ -146,8 +146,10 @@ class billy {
                 let line = w == 0 ? 0 : this._configuration._border;
 
                 for (let z = 0; z <= this._configuration._border; z++) {
-                    context.moveTo(x + (this._configuration._width + line) * w + z - this._offsetX, y);
-                    context.lineTo(x + (this._configuration._width + line) * w + z - this._offsetX, y + (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)));
+                    let asdfasdf = x + (this._configuration._width + line) * w + z - this._offsetX;
+
+                    context.moveTo(asdfasdf, y);
+                    context.lineTo(asdfasdf, y + (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)));
                 }
             }
 
@@ -158,8 +160,6 @@ class billy {
         context.closePath();
         context.stroke();
 
-        this._widthMeasures = x;
-
         this._blocks = this.blocks();
 
         for (let block of this._blocks) {
@@ -169,14 +169,15 @@ class billy {
     }
 
     blocks() {
-        // matrix read:
-        // ------------------------------ ------------------------------
-        // --  1  --  2  --  3  --  4  -- --  13 --  14 --  15 --  16 --
-        // ------------------------------ ------------------------------
-        // --  5  --  6  --  7  --  8  -- --  17 --  18 --  19 --  20 --
-        // ------------------------------ ------------------------------
-        // --  9  --  10 --  11 --  12 -- --  21 --  22 --  23 --  24 --
-        // ------------------------------ ------------------------------
+        // How canvas matrix is read
+        // ------------------------------ ---------------- --------
+        // --  1  --  2  --  3  --  4  -- --  13 --  14 -- -- 19 --
+        // ------------------------------ ---------------- --------
+        // --  5  --  6  --  7  --  8  -- --  15 --  16 -- -- 20 --
+        // ------------------------------ ---------------- --------
+        // --  9  --  10 --  11 --  12 -- --  17 --  18 -- -- 21 --
+        // ------------------------------ ---------------- --------
+
         this._widthMeasures = 0;
         this._blocks = new Array<block>();
 
@@ -211,6 +212,9 @@ class billy {
             this._widthMeasures += (pulsesAndRhythm * this._configuration._width) + ((pulsesAndRhythm * this._configuration._border)) + marginAndSeparation;
         }
 
+        // Because we don't have a separation in the end
+        this._widthMeasures = this._widthMeasures - this._configuration._separation + this._configuration._border;
+
         return this._blocks;
     }
 
@@ -232,8 +236,8 @@ class billy {
     }
 
     handleMouseDown(e) {
-        e.preventDefault();
-        e.stopPropagation();
+        // e.preventDefault();
+        // e.stopPropagation();
 
         document.body.style.cursor = 'pointer';
 

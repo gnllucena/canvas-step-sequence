@@ -12,16 +12,20 @@
         <script src="billy.js"></script>
         <script type="text/javascript">
             var measures = [
-                new measure(8, 1),
-                new measure(8, 1),
-                new measure(8, 1),
-                new measure(8, 1),
-                new measure(8, 1),
-                new measure(8, 1),
+                new measure(3, 3),
+                new measure(2, 3),
+                new measure(1, 3),
+                new measure(4, 3),
+                new measure(1, 3),
             ];
-            
-            //var config = new configuration(2, 0, 5, 5, 1, 1, '#EEEEEE', '#FFFFFF');
-            var config = new configuration(7, 0, 50, 50, 10, 70, '#ff0000', '#0000ff');
+            // var config = new configuration(2, 0, 5, 5, 1, 1, '#EEEEEE', '#FFFFFF');
+
+            // var measures = [
+            //     new measure(8, 1),
+            //     new measure(8, 1),
+            //     new measure(8, 1),
+            // ];
+            var config = new configuration(7, 5, 50, 50, 10, 70, '#ff0000', '#0000ff');
 
             var cvs = new billy('melodia', config, measures);
 
