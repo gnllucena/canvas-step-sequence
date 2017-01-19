@@ -3,19 +3,19 @@ class measure {
     public _rhythm: number;
 
     constructor(
-        _pulses: number, 
-        _rhythm: number) 
+        pulses: number, 
+        rhythm: number) 
     { 
-        if (_pulses == null) {
+        if (pulses == null) {
             this._pulses = 4;
         } else {
-            this._pulses = _pulses;
+            this._pulses = pulses;
         }
 
-        if (_rhythm == null) {
+        if (rhythm == null) {
             this._rhythm = 1;
         } else {
-            this._rhythm = _rhythm;
+            this._rhythm = rhythm;
         }
     }
 }

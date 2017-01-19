@@ -1,77 +1,72 @@
 class configuration {
-    public _frequencies: number;
-    public _margin: number;
-    public _width: number;
-    public _heigth: number;
-    public _border: number;
-    public _separation: number;
-    public _backgroundColor: string;
-    public _borderColor: string;
-    public _shortcuts: shortcuts;
+    _frequencies: number;
+    _margin: number;
+    _width: number;
+    _heigth: number;
+    _border: number;
+    _separation: number;
+    _selectedColor: string;
+    _backgroundColor: string;
+    _shortcuts: shortcuts;
 
     constructor(
-        _frequencies: number,
-        _margin: number,
-        _width: number,
-        _heigth: number,
-        _border: number,
-        _separation: number,
-        _backgroundColor: string,
-        _borderColor: string,
-        _shortcuts: shortcuts) 
+        frequencies: number,
+        margin: number,
+        width: number,
+        heigth: number,
+        border: number,
+        separation: number,
+        selectedColor: string,
+        backgroundColor: string) 
     {
-        if (_frequencies == null) {
+        if (frequencies == null) {
             this._frequencies = 7;
         } else {
-            this._frequencies = _frequencies;
+            this._frequencies = frequencies;
         }
         
-        if (_margin == null) {
+        if (margin == null) {
             this._margin = 5;
         } else {
-            this._margin = _margin;
+            this._margin = margin;
         }
         
-        if (_width == null) {
+        if (width == null) {
             this._width = 40;
         } else {
-            this._width = _width;
+            this._width = width;
         }
         
-        if (_heigth == null) {
+        if (heigth == null) {
             this._heigth = 25;
         } else {
-            this._heigth = _heigth;
+            this._heigth = heigth;
         }
         
-        if (_border == null) {
+        if (border == null) {
             this._border = 5;
         } else {
-            this._border = _border;
+            this._border = border;
         }
         
-        if (_separation == null) {
+        if (separation == null) {
             this._separation = 10;
         } else {
-            this._separation = _separation;
+            this._separation = separation;
         }
 
-        if (_backgroundColor == null) {
+        if (selectedColor == null) {
+            this._selectedColor = '#ff0000';
+        } else {
+            this._selectedColor = selectedColor;
+        }
+
+        if (backgroundColor == null) {
             this._backgroundColor = '#EEEEEE';
         } else {
-            this._backgroundColor = _backgroundColor;
+            this._backgroundColor = backgroundColor;
         }
 
-        if (_borderColor == null) {
-            this._borderColor = '#000000';
-        } else {
-            this._borderColor = _borderColor;
-        }
-
-        if (_shortcuts == null) {
-            this._shortcuts = new shortcuts(null, null, null, null, null, null, null);
-        } else {
-            this._shortcuts = _shortcuts;
-        }
+        this._shortcuts = new shortcuts(null, null, null, null, null, null, null);
     }
 }

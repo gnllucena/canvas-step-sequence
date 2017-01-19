@@ -8,54 +8,54 @@ class shortcuts {
     _deleteSelection: number[];
 
     constructor(
-        _moveSelectionUp: number[], 
-        _moveSelectionLeft: number[],
-        _moveSelectionRight: number[],
-        _moveSelectionDown: number[],
-        _copySelection: number[],
-        _pasteSelection: number[],
-        _deleteSelection: number[]) 
+        moveSelectionUp: number[], 
+        moveSelectionLeft: number[],
+        moveSelectionRight: number[],
+        moveSelectionDown: number[],
+        copySelection: number[],
+        pasteSelection: number[],
+        deleteSelection: number[]) 
     {
-        if (_moveSelectionUp == null) {
+        if (moveSelectionUp == null) {
             this._moveSelectionUp = [23, 54, 33];
         } else { 
-            this._moveSelectionUp = _moveSelectionUp; 
+            this._moveSelectionUp = moveSelectionUp; 
         }
 
-        if (_moveSelectionLeft == null) {
+        if (moveSelectionLeft == null) {
             this._moveSelectionLeft = [23, 54, 33];
         } else { 
-            this._moveSelectionLeft = _moveSelectionLeft; 
+            this._moveSelectionLeft = moveSelectionLeft; 
         }
 
-        if (_moveSelectionRight == null) {
+        if (moveSelectionRight == null) {
             this._moveSelectionRight = [23, 54, 33];
         } else { 
-            this._moveSelectionRight = _moveSelectionRight; 
+            this._moveSelectionRight = moveSelectionRight; 
         }
 
-        if (_moveSelectionDown == null) {
+        if (moveSelectionDown == null) {
             this._moveSelectionDown = [23, 54, 33];
         } else { 
-            this._moveSelectionDown = _moveSelectionDown; 
+            this._moveSelectionDown = moveSelectionDown; 
         }
 
-        if (_copySelection == null) {
+        if (copySelection == null) {
             this._copySelection = [23, 54, 33];
         } else { 
-            this._copySelection = _copySelection; 
+            this._copySelection = copySelection; 
         }
 
-        if (_pasteSelection == null) {
+        if (pasteSelection == null) {
             this._pasteSelection = [23, 54, 33];
         } else { 
-            this._pasteSelection = _pasteSelection; 
+            this._pasteSelection = pasteSelection; 
         }
 
-        if (_deleteSelection == null) {
+        if (deleteSelection == null) {
             this._deleteSelection = [23, 54, 33];
         } else { 
-            this._deleteSelection = _deleteSelection; 
+            this._deleteSelection = deleteSelection; 
         }
     }
 }
