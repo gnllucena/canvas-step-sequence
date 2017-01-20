@@ -6,6 +6,7 @@ class configuration {
     _border: number;
     _separation: number;
     _selectedColor: string;
+    _sensibility: number;
     _backgroundColor: string;
     _shortcuts: shortcuts;
 
@@ -17,7 +18,8 @@ class configuration {
         border: number,
         separation: number,
         selectedColor: string,
-        backgroundColor: string) 
+        backgroundColor: string,
+        sensibility: number) 
     {
         if (frequencies == null) {
             this._frequencies = 7;
@@ -65,6 +67,12 @@ class configuration {
             this._backgroundColor = '#EEEEEE';
         } else {
             this._backgroundColor = backgroundColor;
+        }
+
+        if (sensibility == null) {
+            this._sensibility = 0.4;
+        } else {
+            this._sensibility = sensibility;
         }
 
         this._shortcuts = new shortcuts(null, null, null, null, null, null, null);

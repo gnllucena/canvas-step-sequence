@@ -10,6 +10,7 @@
 // ctrl + shift + alt + number: transforma o motif
 var billy = (function () {
     function billy(selector, config, measures) {
+        this._blocks = new Array();
         this._isDragging = false;
         this._isClicking = false;
         this._isCtrlPressed = false;
@@ -23,7 +24,7 @@ var billy = (function () {
         this._widthMeasures = 0;
         this._heigthMeasures = 0;
         this._measures = measures;
-        this._configuration = new configuration(config._frequencies, config._margin, config._width, config._heigth, config._border, config._separation, config._selectedColor, config._backgroundColor);
+        this._configuration = new configuration(config._frequencies, config._margin, config._width, config._heigth, config._border, config._separation, config._selectedColor, config._backgroundColor, config._sensibility);
         if (this._configuration._shortcuts == null) {
             this._configuration._shortcuts = new shortcuts(null, null, null, null, null, null, null);
         }
@@ -73,9 +74,18 @@ var billy = (function () {
     }
     billy.prototype.draw = function () {
         var context = this._canvas.getContext("2d");
+        var canvasWidthAndWidth = this._canvas.width + this._configuration._width;
+        var canvasHeigthAndHeigth = this._canvas.height + this._configuration._heigth;
+        var inversedWidth = this._configuration._width * -1;
+        var inversedHeigth = this._configuration._heigth * -1;
         this._blocks = this.blocks();
         for (var _i = 0, _a = this._blocks; _i < _a.length; _i++) {
             var block_1 = _a[_i];
+            var outX = block_1._x < inversedWidth || block_1._x > canvasWidthAndWidth;
+            var outY = block_1._y < inversedHeigth || block_1._y > canvasHeigthAndHeigth;
+            if (outX || outY) {
+                continue;
+            }
             if (block_1._selected) {
                 context.fillStyle = this._configuration._selectedColor;
             }
@@ -86,16 +96,15 @@ var billy = (function () {
         }
     };
     billy.prototype.blocks = function () {
-        // How canvas matrix is read
         // ------------------------------ ---------------- --------
-        // --  1  --  2  --  3  --  4  -- --  13 --  14 -- -- 19 --
+        // --  1  --  4  --  7  --  10 -- --  13 --  16 -- -- 19 --
         // ------------------------------ ---------------- --------
-        // --  5  --  6  --  7  --  8  -- --  15 --  16 -- -- 20 --
+        // --  2  --  5  --  8  --  11 -- --  14 --  17 -- -- 20 --
         // ------------------------------ ---------------- --------
-        // --  9  --  10 --  11 --  12 -- --  17 --  18 -- -- 21 --
+        // --  3  --  6  --  9  --  12 -- --  15 --  18 -- -- 21 --
         // ------------------------------ ---------------- --------
         this._widthMeasures = 0;
-        this._blocks = new Array();
+        var newBlocks = new Array();
         var marginAndBorder = this._configuration._margin + this._configuration._border;
         var widthAndBorder = this._configuration._width + this._configuration._border;
         var heigthAndBorder = this._configuration._heigth + this._configuration._border;
@@ -104,23 +113,28 @@ var billy = (function () {
         for (var i = 0; i <= this._measures.length - 1; i++) {
             var measure_1 = this._measures[i];
             var pulsesTimesRhythm = measure_1._pulses * measure_1._rhythm;
-            for (var w = 0; w <= this._configuration._frequencies - 1; w++) {
-                var widthPulses = this._widthMeasures + marginAndBorder;
-                this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth, false));
-                for (var z = 1; z <= pulsesTimesRhythm - 1; z++) {
-                    widthPulses += widthAndBorder;
-                    this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth, false));
+            var widthPulses = this._widthMeasures + marginAndBorder;
+            for (var w = 0; w <= pulsesTimesRhythm - 1; w++) {
+                newBlocks.push(new block(widthPulses - this._offsetX, heigthFrequencies - this._offsetY, this._configuration._width, this._configuration._heigth));
+                for (var z = 1; z <= this._configuration._frequencies - 1; z++) {
+                    heigthFrequencies += heigthAndBorder;
+                    newBlocks.push(new block(widthPulses - this._offsetX, heigthFrequencies - this._offsetY, this._configuration._width, this._configuration._heigth));
                 }
-                heigthFrequencies += heigthAndBorder;
+                widthPulses += widthAndBorder;
+                heigthFrequencies = marginAndBorder;
             }
             heigthFrequencies = marginAndBorder;
             this._widthMeasures += (pulsesTimesRhythm * this._configuration._width) + ((pulsesTimesRhythm * this._configuration._border)) + marginAndSeparation;
         }
+        for (var i = 0; i <= this._blocks.length - 1; i++) {
+            newBlocks[i]._selected = this._blocks[i]._selected;
+        }
+        this._blocks = newBlocks;
         // Because we don't have a separation in the end
         this._widthMeasures = this._widthMeasures - this._configuration._separation;
         return this._blocks;
     };
-    billy.prototype.behaviorOffset = function (e) {
+    billy.prototype.behaviorDragging = function (e) {
         if (!this._isDragging) {
             return;
         }
@@ -129,8 +143,9 @@ var billy = (function () {
         var y = e.clientY - rect.top;
         var newX = x - this._mouseX;
         var newY = x - this._mouseY;
-        this._offsetX += (newX - newX * 0.5) * -1;
-        this._offsetY += (newY - newY * 0.5) * -1;
+        this._offsetX += (newX - newX * this._configuration._sensibility) * -1;
+        this._offsetY = 0;
+        // this._offsetY += (newY - newY * this._configuration._sensibility) * -1;
         this._mouseX = x;
         this._mouseY = y;
         var margin = 10;
@@ -151,7 +166,7 @@ var billy = (function () {
         context.clearRect(0, 0, this._canvas.width, this._canvas.height);
         this.draw();
     };
-    billy.prototype.behaviorClick = function (e) {
+    billy.prototype.behaviorClicking = function (e) {
         if (!this._isClicking) {
             return;
         }
@@ -183,61 +198,53 @@ var billy = (function () {
         var grouping = {};
         for (var _i = 0, sorted_1 = sorted; _i < sorted_1.length; _i++) {
             var block_2 = sorted_1[_i];
-            if (grouping[block_2._x] === undefined) {
-                grouping[block_2._x] = [block_2._x];
+            if (grouping[block_2._y] === undefined) {
+                grouping[block_2._y] = [block_2._y];
             }
-            grouping[block_2._x].push(block_2._y);
+            grouping[block_2._y].push(block_2._x);
         }
         var length = Object.keys(grouping).length;
         var exit = false;
         // let's find out clicked block
-        // todo: 
-        // var filteredArray = array.filter(function (element) { 
-        //     return element.id === 0;
-        // });
+        // this may be improved
         for (var i = 0; i <= length - 1; i++) {
             if (exit) {
                 break;
             }
             var key = Object.keys(grouping)[i];
-            var xofBlock = +key;
-            if (xofBlock < 0) {
+            var yofBlock = +key;
+            // we don't have to handle blocks not written in the canvas
+            if (yofBlock < 0) {
                 continue;
             }
-            // check if click was beyond block
-            if (this._mouseX > xofBlock) {
-                if (this._mouseX > xofBlock + this._configuration._width) {
-                    break;
-                }
+            // click was in border or in margin
+            if (this._mouseY < yofBlock) {
+                continue;
             }
             // must check if click was in range of a block
-            if (xofBlock <= this._mouseX && this._mouseX < xofBlock + this._configuration._width) {
-                var ys = grouping[key];
-                for (var w = 0; w <= ys.length - 1; w++) {
-                    if (exit) {
-                        break;
-                    }
-                    var yofBlock = ys[w];
-                    if (yofBlock < 0) {
+            if (yofBlock <= this._mouseY && this._mouseY < yofBlock + this._configuration._width) {
+                var xs = grouping[key];
+                for (var w = 0; w <= xs.length; w++) {
+                    var xofBlock = xs[w];
+                    if (xofBlock < 0) {
                         continue;
                     }
-                    // check if click was beyond block
-                    if (this._mouseY > yofBlock) {
-                        if (this._mouseY > yofBlock + this._configuration._heigth) {
-                            exit = true;
-                            break;
-                        }
+                    // click was in border or in margin
+                    if (this._mouseX < xofBlock) {
+                        continue;
                     }
-                    if (yofBlock <= this._mouseY && this._mouseY < yofBlock + this._configuration._width) {
+                    // found
+                    if (xofBlock <= this._mouseX && this._mouseX < xofBlock + this._configuration._width) {
+                        exit = true;
+                        var context = this._canvas.getContext("2d");
+                        context.fillStyle = this._configuration._selectedColor;
+                        context.fillRect(xofBlock, yofBlock, this._configuration._width, this._configuration._heigth);
                         var index = this._blocks.map(function (x) {
                             return x._x.toString() + '-' + x._y;
                         }).indexOf(xofBlock.toString() + '-' + yofBlock.toString());
                         var block_3 = this._blocks[index];
-                        block_3.select();
-                        var context = this._canvas.getContext("2d");
-                        context.fillStyle = this._configuration._selectedColor;
-                        context.fillRect(xofBlock, yofBlock, this._configuration._width, this._configuration._heigth);
-                        exit = true;
+                        block_3._selected = true;
+                        break;
                     }
                 }
             }
@@ -265,39 +272,31 @@ var billy = (function () {
     billy.prototype.handleMouseUp = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        this.behaviorClick(e);
+        this.behaviorClicking(e);
         this._isDragging = false;
         this._isClicking = false;
     };
     billy.prototype.handleMouseMove = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        this.behaviorOffset(e);
+        this.behaviorDragging(e);
     };
     billy.prototype.handleContextMenu = function (e) {
-    };
-    billy.prototype.getMeasures = function () {
     };
     return billy;
 }());
 var block = (function () {
-    function block(x, y, width, height, selected) {
+    function block(x, y, width, height) {
         this._x = x;
         this._y = y;
         this._width = width;
         this._height = height;
-        this._selected = selected;
-    }
-    block.prototype.select = function () {
-        this._selected = true;
-    };
-    block.prototype.unselect = function () {
         this._selected = false;
-    };
+    }
     return block;
 }());
 var configuration = (function () {
-    function configuration(frequencies, margin, width, heigth, border, separation, selectedColor, backgroundColor) {
+    function configuration(frequencies, margin, width, heigth, border, separation, selectedColor, backgroundColor, sensibility) {
         if (frequencies == null) {
             this._frequencies = 7;
         }
@@ -345,6 +344,12 @@ var configuration = (function () {
         }
         else {
             this._backgroundColor = backgroundColor;
+        }
+        if (sensibility == null) {
+            this._sensibility = 0.4;
+        }
+        else {
+            this._sensibility = sensibility;
         }
         this._shortcuts = new shortcuts(null, null, null, null, null, null, null);
     }

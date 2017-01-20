@@ -14,7 +14,7 @@ class billy {
     _canvas : HTMLCanvasElement;
     _configuration : configuration;
     _measures : Array<measure>;
-    private _blocks: Array<block>;
+    _blocks: Array<block> = new Array<block>();
 
     _isDragging: boolean = false;
     _isClicking: boolean = false;
@@ -33,7 +33,11 @@ class billy {
     _widthMeasures: number = 0;
     _heigthMeasures: number = 0;
 
-    constructor(selector: string, config: configuration, measures: Array<measure>) {
+    constructor(
+        selector: string, 
+        config: configuration, 
+        measures: Array<measure>) 
+    {
         this._measures = measures;
 
         this._configuration = new configuration(
@@ -44,7 +48,8 @@ class billy {
             config._border, 
             config._separation, 
             config._selectedColor, 
-            config._backgroundColor);
+            config._backgroundColor,
+            config._sensibility);
 
         if (this._configuration._shortcuts == null) {
             this._configuration._shortcuts = new shortcuts(null, null, null, null, null, null, null);
@@ -111,9 +116,21 @@ class billy {
     draw() {
         let context = this._canvas.getContext("2d");
 
+        let canvasWidthAndWidth = this._canvas.width + this._configuration._width;
+        let canvasHeigthAndHeigth = this._canvas.height + this._configuration._heigth;
+        let inversedWidth = this._configuration._width * -1
+        let inversedHeigth = this._configuration._heigth * -1;
+
         this._blocks = this.blocks();
 
         for (let block of this._blocks) {
+            let outX = block._x < inversedWidth || block._x > canvasWidthAndWidth;
+            let outY = block._y < inversedHeigth || block._y > canvasHeigthAndHeigth;
+
+            if (outX || outY) {
+                continue;
+            }
+
             if (block._selected) {
                 context.fillStyle = this._configuration._selectedColor;
             } else {
@@ -125,17 +142,16 @@ class billy {
     }
 
     blocks() {
-        // How canvas matrix is read
         // ------------------------------ ---------------- --------
-        // --  1  --  2  --  3  --  4  -- --  13 --  14 -- -- 19 --
+        // --  1  --  4  --  7  --  10 -- --  13 --  16 -- -- 19 --
         // ------------------------------ ---------------- --------
-        // --  5  --  6  --  7  --  8  -- --  15 --  16 -- -- 20 --
+        // --  2  --  5  --  8  --  11 -- --  14 --  17 -- -- 20 --
         // ------------------------------ ---------------- --------
-        // --  9  --  10 --  11 --  12 -- --  17 --  18 -- -- 21 --
+        // --  3  --  6  --  9  --  12 -- --  15 --  18 -- -- 21 --
         // ------------------------------ ---------------- --------
-
         this._widthMeasures = 0;
-        this._blocks = new Array<block>();
+
+        let newBlocks = new Array<block>();
 
         let marginAndBorder = this._configuration._margin + this._configuration._border;
         let widthAndBorder = this._configuration._width + this._configuration._border;
@@ -143,24 +159,24 @@ class billy {
         let marginAndSeparation = this._configuration._margin + this._configuration._separation;
 
         let heigthFrequencies = marginAndBorder;
-
+        
         for (let i = 0; i <= this._measures.length - 1; i++) {
             let measure = this._measures[i];
-            
+
             let pulsesTimesRhythm = measure._pulses * measure._rhythm;
+            let widthPulses = this._widthMeasures + marginAndBorder;
 
-            for (let w = 0; w <= this._configuration._frequencies - 1; w++) {
-                let widthPulses = this._widthMeasures + marginAndBorder;
+            for (let w = 0; w <= pulsesTimesRhythm - 1; w++) {
+                newBlocks.push(new block(widthPulses - this._offsetX, heigthFrequencies - this._offsetY, this._configuration._width, this._configuration._heigth));
 
-                this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth, false));
+                for (let z = 1; z <= this._configuration._frequencies - 1; z++) {
+                    heigthFrequencies += heigthAndBorder;
 
-                for (let z = 1; z <= pulsesTimesRhythm - 1; z++) {
-                    widthPulses += widthAndBorder;
-
-                    this._blocks.push(new block(widthPulses - this._offsetX, heigthFrequencies, this._configuration._width, this._configuration._heigth, false));
+                    newBlocks.push(new block(widthPulses - this._offsetX, heigthFrequencies - this._offsetY, this._configuration._width, this._configuration._heigth));
                 }
 
-                heigthFrequencies += heigthAndBorder;
+                widthPulses += widthAndBorder;
+                heigthFrequencies = marginAndBorder;
             }
 
             heigthFrequencies = marginAndBorder;
@@ -168,13 +184,19 @@ class billy {
             this._widthMeasures += (pulsesTimesRhythm * this._configuration._width) + ((pulsesTimesRhythm * this._configuration._border)) + marginAndSeparation;
         }
 
+        for (let i = 0; i <= this._blocks.length - 1; i++) {
+            newBlocks[i]._selected = this._blocks[i]._selected;
+        }
+
+        this._blocks = newBlocks;
+        
         // Because we don't have a separation in the end
         this._widthMeasures = this._widthMeasures - this._configuration._separation;
 
         return this._blocks;
     }
 
-    behaviorOffset(e) {
+    behaviorDragging(e) {
         if (!this._isDragging) {
             return;
         }
@@ -187,8 +209,9 @@ class billy {
         let newX = x - this._mouseX;
         let newY = x - this._mouseY;
 
-        this._offsetX += (newX - newX * 0.5) * -1;
-        this._offsetY += (newY - newY * 0.5) * -1;
+        this._offsetX += (newX - newX * this._configuration._sensibility) * -1;
+        this._offsetY = 0;
+        // this._offsetY += (newY - newY * this._configuration._sensibility) * -1;
 
         this._mouseX = x; 
         this._mouseY = y;
@@ -213,7 +236,7 @@ class billy {
         this.draw();
     }
 
-    behaviorClick(e) {
+    behaviorClicking(e) {
         if (!this._isClicking) {
             return;
         }
@@ -248,78 +271,70 @@ class billy {
         let grouping = { };
 
         for (let block of sorted) {
-            if (grouping[block._x] === undefined) {
-                grouping[block._x] = [block._x];
+            if (grouping[block._y] === undefined) {
+                grouping[block._y] = [block._y];
             }
 
-            grouping[block._x].push(block._y);
+            grouping[block._y].push(block._x);
         }
 
         let length = Object.keys(grouping).length;
         let exit:boolean = false;
 
         // let's find out clicked block
-        // todo: 
-        // var filteredArray = array.filter(function (element) { 
-        //     return element.id === 0;
-        // });
+        // this may be improved
         for (let i = 0; i <= length - 1; i++) {
             if (exit) {
                 break;
             }
 
-            let key = Object.keys(grouping)[i];
+            let key = Object.keys(grouping)[i]; 
 
-            let xofBlock:number = +key;
+            let yofBlock:number = +key;
 
-            if (xofBlock < 0) {
+            // we don't have to handle blocks not written in the canvas
+            if (yofBlock < 0) {
                 continue;
             }
 
-            // check if click was beyond block
-            if (this._mouseX > xofBlock) {
-                if (this._mouseX > xofBlock + this._configuration._width) {
-                    break;
-                }
+            // click was in border or in margin
+            if (this._mouseY < yofBlock) {
+                continue;
             }
-
+            
             // must check if click was in range of a block
-            if (xofBlock <= this._mouseX && this._mouseX < xofBlock + this._configuration._width) {
-                let ys:[number] = grouping[key];
+            if (yofBlock <= this._mouseY && this._mouseY < yofBlock + this._configuration._width) {
+                let xs:[number] = grouping[key];
 
-                for (let w = 0; w <= ys.length - 1; w++) {
-                    if (exit) {
-                        break;
-                    }
+                for (let w = 0; w <= xs.length; w++) {
+                    let xofBlock:number = xs[w];
 
-                    let yofBlock:number = ys[w];
-
-                    if (yofBlock < 0) {
+                    if (xofBlock < 0) {
                         continue;
                     }
 
-                    // check if click was beyond block
-                    if (this._mouseY > yofBlock) {
-                        if (this._mouseY > yofBlock + this._configuration._heigth) {
-                            exit = true;
-                            break;
-                        }
+                    // click was in border or in margin
+                    if (this._mouseX < xofBlock) {
+                        continue;
                     }
 
-                    if (yofBlock <= this._mouseY && this._mouseY < yofBlock + this._configuration._width) {
-                        let index:number = this._blocks.map(function(x) { 
-                            return x._x.toString() + '-' + x._y 
-                        }).indexOf(xofBlock.toString() + '-' + yofBlock.toString())
-                        
-                        let block:block = this._blocks[index];
-                        block.select();
+                    // found
+                    if (xofBlock <= this._mouseX && this._mouseX < xofBlock + this._configuration._width) {
+                        exit = true;
                         
                         let context = this._canvas.getContext("2d");
 
                         context.fillStyle = this._configuration._selectedColor;
                         context.fillRect(xofBlock, yofBlock, this._configuration._width, this._configuration._heigth);
+                        
+                        var index = this._blocks.map(function (x) {
+                            return x._x.toString() + '-' + x._y;
+                        }).indexOf(xofBlock.toString() + '-' + yofBlock.toString());
 
-                        exit = true;
+                        let block = this._blocks[index];
+                        block._selected = true;
+
+                        break;
                     }
                 }
             }
@@ -355,7 +370,7 @@ class billy {
         e.preventDefault();
         e.stopPropagation();
 
-        this.behaviorClick(e);
+        this.behaviorClicking(e);
 
         this._isDragging = false;
         this._isClicking = false;
@@ -365,12 +380,9 @@ class billy {
         e.preventDefault();
         e.stopPropagation();
 
-        this.behaviorOffset(e);
+        this.behaviorDragging(e);
     }
 
     handleContextMenu(e) {
-    }
-
-    getMeasures() {
     }
 }

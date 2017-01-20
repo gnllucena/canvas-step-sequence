@@ -9,21 +9,12 @@ class block {
         x: number, 
         y: number, 
         width: number, 
-        height: number,
-        selected: boolean) 
+        height: number) 
     {
         this._x = x;
         this._y = y;
         this._width = width;
         this._height = height;
-        this._selected = selected;
-    }
-
-    select() {
-        this._selected = true;
-    }
-
-    unselect() {
         this._selected = false;
     }
 }
