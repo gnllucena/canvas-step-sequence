@@ -11,14 +11,12 @@
 var billy = (function () {
     function billy(selector, config, measures) {
         this._blocks = new Array();
+        this._pressed = new Array();
         this._isDragging = false;
         this._isClicking = false;
-        this._isCtrlPressed = false;
-        this._isShiftPressed = false;
-        this._isUpArrowPressed = false;
-        this._isDownArrowPressed = false;
-        this._isLeftArrowPressed = false;
-        this._isRigthArrowPressed = false;
+        this._leftButtonClicked = false;
+        this._rightButtonClicked = false;
+        this._middleButtonClicked = false;
         this._offsetX = 0;
         this._offsetY = 0;
         this._widthMeasures = 0;
@@ -167,17 +165,9 @@ var billy = (function () {
         this.draw();
     };
     billy.prototype.behaviorClicking = function (e) {
-        if (!this._isClicking) {
+        if (!this._isClicking || !this._leftButtonClicked) {
             return;
         }
-        // if (this._isClicking) {
-        //     if (x > this._mouseX - margin &&
-        //         x < this._mouseX + margin &&
-        //         y > this._mouseY - margin &&
-        //         y < this._mouseY + margin) {
-        //             this._isClicking = false;
-        //     }
-        // }
         var sorted = this.blocks().slice(0).sort(function (a, b) {
             if (a._x > b._x) {
                 return 1;
@@ -268,6 +258,28 @@ var billy = (function () {
         this._mouseY = y;
         this._isDragging = true;
         this._isClicking = true;
+        switch (e.which) {
+            case 1:
+                this._leftButtonClicked = true;
+                this._rightButtonClicked = false;
+                this._middleButtonClicked = false;
+                break;
+            case 2:
+                this._leftButtonClicked = false;
+                this._rightButtonClicked = false;
+                this._middleButtonClicked = true;
+                break;
+            case 3:
+                this._leftButtonClicked = false;
+                this._rightButtonClicked = true;
+                this._middleButtonClicked = false;
+                break;
+            default:
+                this._leftButtonClicked = true;
+                this._rightButtonClicked = false;
+                this._middleButtonClicked = false;
+                break;
+        }
     };
     billy.prototype.handleMouseUp = function (e) {
         e.preventDefault();
@@ -279,7 +291,17 @@ var billy = (function () {
     billy.prototype.handleMouseMove = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        this.behaviorDragging(e);
+        if (this._rightButtonClicked) {
+            this.behaviorDragging(e);
+        }
+        else {
+            var rect = this._canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            this._mouseX = x;
+            this._mouseY = y;
+            this.behaviorClicking(e);
+        }
     };
     billy.prototype.handleContextMenu = function (e) {
     };

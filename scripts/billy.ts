@@ -15,15 +15,14 @@ class billy {
     _configuration : configuration;
     _measures : Array<measure>;
     _blocks: Array<block> = new Array<block>();
+    _pressed: Array[number] = new Array<number>();
 
     _isDragging: boolean = false;
     _isClicking: boolean = false;
-    _isCtrlPressed: boolean = false;
-    _isShiftPressed: boolean = false;
-    _isUpArrowPressed: boolean = false;
-    _isDownArrowPressed: boolean = false;
-    _isLeftArrowPressed: boolean = false;
-    _isRigthArrowPressed: boolean = false;
+
+    _leftButtonClicked: boolean = false;
+    _rightButtonClicked: boolean = false;
+    _middleButtonClicked: boolean = false;
 
     _offsetX: number = 0;
     _offsetY: number = 0;
@@ -210,7 +209,7 @@ class billy {
         let newY = x - this._mouseY;
 
         this._offsetX += (newX - newX * this._configuration._sensibility) * -1;
-        this._offsetY = 0;
+        this._offsetY = 0
         // this._offsetY += (newY - newY * this._configuration._sensibility) * -1;
 
         this._mouseX = x; 
@@ -237,18 +236,9 @@ class billy {
     }
 
     behaviorClicking(e) {
-        if (!this._isClicking) {
+        if (!this._isClicking || !this._leftButtonClicked) {
             return;
         }
-
-        // if (this._isClicking) {
-        //     if (x > this._mouseX - margin &&
-        //         x < this._mouseX + margin &&
-        //         y > this._mouseY - margin &&
-        //         y < this._mouseY + margin) {
-        //             this._isClicking = false;
-        //     }
-        // }
 
         let sorted: Array<block> = this.blocks().slice(0).sort(function(a, b) { 
             if (a._x > b._x) {
@@ -364,6 +354,29 @@ class billy {
         this._mouseY = y;
         this._isDragging = true;
         this._isClicking = true;
+
+        switch (e.which) {
+            case 1:
+                this._leftButtonClicked = true;
+                this._rightButtonClicked = false;
+                this._middleButtonClicked = false;
+                break;
+            case 2:
+                this._leftButtonClicked = false;
+                this._rightButtonClicked = false;
+                this._middleButtonClicked = true;
+                break;
+            case 3:
+                this._leftButtonClicked = false;
+                this._rightButtonClicked = true;
+                this._middleButtonClicked = false;
+                break;
+            default: 
+                this._leftButtonClicked = true;
+                this._rightButtonClicked = false;
+                this._middleButtonClicked = false;
+                break;
+        }
     }
 
     handleMouseUp(e) {
@@ -380,7 +393,18 @@ class billy {
         e.preventDefault();
         e.stopPropagation();
 
-        this.behaviorDragging(e);
+        if (this._rightButtonClicked) {
+            this.behaviorDragging(e);
+        } else {
+            let rect = this._canvas.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+
+            this._mouseX = x; 
+            this._mouseY = y;
+
+            this.behaviorClicking(e);
+        }
     }
 
     handleContextMenu(e) {
