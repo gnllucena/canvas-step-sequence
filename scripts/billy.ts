@@ -55,90 +55,36 @@ class Billy {
             this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
         }
 
-        let that = this;
-
         this.canvas = <HTMLCanvasElement> document.getElementById(_selector);
             
-        this.canvas.addEventListener('keydown', function(e) { 
-            that.handleKeyDown(e); 
-            console.log('keydown handle called.');
-        });
-
-        this.canvas.addEventListener('keyup', function(e) { 
-            that.handleKeyUp(e); 
-            console.log('keyup handle called.');
-        });
-
-        this.canvas.addEventListener('mousedown', function(e) { 
-            that.handleMouseDown(e);
-            console.log('mousedown handle called.');
-        });
-
-        this.canvas.addEventListener('mouseup', function(e) { 
-            that.handleMouseUp(e); 
-            console.log('mouseup handle called.');
-        });
-
-        this.canvas.addEventListener('mousemove', function(e) { 
-            that.handleMouseMove(e); 
-            console.log('mousemove handle called.');
-        });
-
-        this.canvas.addEventListener('mouseout', function(e) { 
-            that.handleMouseOut(e); 
-            console.log('mouseout handle called.');
-        });
+        this.canvas.addEventListener('keydown', this.handleKeyDown.bind(this));
+        this.canvas.addEventListener('keyup', this.handleKeyUp.bind(this));
+        this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        this.canvas.addEventListener('mouseout', this.handleMouseOut.bind(this));
 
         this.canvas.oncontextmenu = function (e) {
             e.preventDefault();
         };
 
-        let factor = 0.05;
-        let maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * factor;
-        let maxHeigth = (this.configuration.heigth * this.configuration.frequencies) + (this.configuration.border * (this.configuration.frequencies + 1)) + this.configuration.margin * 2;
-        
-        window.addEventListener('resize', function() {
-            // It's necessary to recalculate canvas width everytime the window is resized
-            that.canvas.width = that.canvas.parentElement.offsetWidth - that.canvas.parentElement.offsetWidth * factor;
-            that.canvas.height = maxHeigth;
+        let self = this;
+        var resizing = function(e) {
+            let maxWidth = self.canvas.parentElement.offsetWidth - self.canvas.parentElement.offsetWidth * 0.05;
+            let maxHeigth = (self.configuration.heigth * self.configuration.frequencies) + (self.configuration.border * (self.configuration.frequencies + 1)) + self.configuration.margin * 2;
 
-            that.offsetX = 0;
-            that.offsetY = 0;
+            self.offsetX = 0;
+            self.offsetY = 0;
 
-            that.draw();
-            console.log('resize handle called.');
-        });
+            self.canvas.width = maxWidth;
+            self.canvas.height = maxHeigth;
 
-        this.canvas.width = maxWidth;
-        this.canvas.height = maxHeigth;
-    }
-
-    draw() {
-        let context = this.canvas.getContext("2d");
-
-        let canvasWidthAndWidth = this.canvas.width + this.configuration.width;
-        let canvasHeigthAndHeigth = this.canvas.height + this.configuration.heigth;
-        let inversedWidth = this.configuration.width * -1
-        let inversedHeigth = this.configuration.heigth * -1;
-
-        this.blocks = this.map();
-
-        for (let block of this.blocks) {
-            let outX = block.x < inversedWidth || block.x > canvasWidthAndWidth;
-            let outY = block.y < inversedHeigth || block.y > canvasHeigthAndHeigth;
-
-            if (outX || outY) {
-                continue;
-            }
-
-            if (block.selected) {
-                context.fillStyle = this.configuration.selectedColor;
-            } else {
-                context.fillStyle = this.configuration.backgroundColor;
-            }
-
-            context.fillRect(block.x, block.y, block.width, block.height);
+            self.draw();
         }
+
+        window.addEventListener('resize', resizing.bind(this));
+
+        resizing(new Event('build'));
     }
 
     map() {
@@ -197,6 +143,34 @@ class Billy {
         return this.blocks;
     }
 
+    draw() {
+        let context = this.canvas.getContext("2d");
+
+        let canvasWidthAndWidth = this.canvas.width + this.configuration.width;
+        let canvasHeigthAndHeigth = this.canvas.height + this.configuration.heigth;
+        let inversedWidth = this.configuration.width * -1
+        let inversedHeigth = this.configuration.heigth * -1;
+
+        this.blocks = this.map();
+
+        for (let block of this.blocks) {
+            let outX = block.x < inversedWidth || block.x > canvasWidthAndWidth;
+            let outY = block.y < inversedHeigth || block.y > canvasHeigthAndHeigth;
+
+            if (outX || outY) {
+                continue;
+            }
+
+            if (block.selected) {
+                context.fillStyle = this.configuration.selectedColor;
+            } else {
+                context.fillStyle = this.configuration.backgroundColor;
+            }
+
+            context.fillRect(block.x, block.y, block.width, block.height);
+        }
+    }
+
     behaviorDragging(e) {
         if (!this.isDragging) {
             return;
@@ -212,7 +186,7 @@ class Billy {
 
         this.offsetX += (newX - newX * this.configuration.sensibility) * -1;
         this.offsetY = 0
-        // this._offsetY += (newY - newY * this._configuration._sensibility) * -1;
+        // this.offsetY += (newY - newY * this.configuration.sensibility) * -1;
 
         this.mouseX = x; 
         this.mouseY = y;
@@ -339,9 +313,6 @@ class Billy {
             }
         }
     }
-
-    behaviorEditing(e) {
-    }
     
     handleKeyDown(e) {
         e.preventDefault();
@@ -419,7 +390,6 @@ class Billy {
             this.behaviorDragging(e);
         }
         else {
-            this.behaviorEditing(e);
         }
     }
 

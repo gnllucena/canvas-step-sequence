@@ -26,73 +26,29 @@ var Billy = (function () {
         if (this.configuration.shortcuts == null) {
             this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
         }
-        var that = this;
         this.canvas = document.getElementById(_selector);
-        this.canvas.addEventListener('keydown', function (e) {
-            that.handleKeyDown(e);
-            console.log('keydown handle called.');
-        });
-        this.canvas.addEventListener('keyup', function (e) {
-            that.handleKeyUp(e);
-            console.log('keyup handle called.');
-        });
-        this.canvas.addEventListener('mousedown', function (e) {
-            that.handleMouseDown(e);
-            console.log('mousedown handle called.');
-        });
-        this.canvas.addEventListener('mouseup', function (e) {
-            that.handleMouseUp(e);
-            console.log('mouseup handle called.');
-        });
-        this.canvas.addEventListener('mousemove', function (e) {
-            that.handleMouseMove(e);
-            console.log('mousemove handle called.');
-        });
-        this.canvas.addEventListener('mouseout', function (e) {
-            that.handleMouseOut(e);
-            console.log('mouseout handle called.');
-        });
+        this.canvas.addEventListener('keydown', this.handleKeyDown.bind(this));
+        this.canvas.addEventListener('keyup', this.handleKeyUp.bind(this));
+        this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        this.canvas.addEventListener('mouseout', this.handleMouseOut.bind(this));
         this.canvas.oncontextmenu = function (e) {
             e.preventDefault();
         };
-        var factor = 0.05;
-        var maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * factor;
-        var maxHeigth = (this.configuration.heigth * this.configuration.frequencies) + (this.configuration.border * (this.configuration.frequencies + 1)) + this.configuration.margin * 2;
-        window.addEventListener('resize', function () {
-            // It's necessary to recalculate canvas width everytime the window is resized
-            that.canvas.width = that.canvas.parentElement.offsetWidth - that.canvas.parentElement.offsetWidth * factor;
-            that.canvas.height = maxHeigth;
-            that.offsetX = 0;
-            that.offsetY = 0;
-            that.draw();
-            console.log('resize handle called.');
-        });
-        this.canvas.width = maxWidth;
-        this.canvas.height = maxHeigth;
+        var self = this;
+        var resizing = function (e) {
+            var maxWidth = self.canvas.parentElement.offsetWidth - self.canvas.parentElement.offsetWidth * 0.05;
+            var maxHeigth = (self.configuration.heigth * self.configuration.frequencies) + (self.configuration.border * (self.configuration.frequencies + 1)) + self.configuration.margin * 2;
+            self.offsetX = 0;
+            self.offsetY = 0;
+            self.canvas.width = maxWidth;
+            self.canvas.height = maxHeigth;
+            self.draw();
+        };
+        window.addEventListener('resize', resizing.bind(this));
+        resizing(new Event('build'));
     }
-    Billy.prototype.draw = function () {
-        var context = this.canvas.getContext("2d");
-        var canvasWidthAndWidth = this.canvas.width + this.configuration.width;
-        var canvasHeigthAndHeigth = this.canvas.height + this.configuration.heigth;
-        var inversedWidth = this.configuration.width * -1;
-        var inversedHeigth = this.configuration.heigth * -1;
-        this.blocks = this.map();
-        for (var _i = 0, _a = this.blocks; _i < _a.length; _i++) {
-            var block = _a[_i];
-            var outX = block.x < inversedWidth || block.x > canvasWidthAndWidth;
-            var outY = block.y < inversedHeigth || block.y > canvasHeigthAndHeigth;
-            if (outX || outY) {
-                continue;
-            }
-            if (block.selected) {
-                context.fillStyle = this.configuration.selectedColor;
-            }
-            else {
-                context.fillStyle = this.configuration.backgroundColor;
-            }
-            context.fillRect(block.x, block.y, block.width, block.height);
-        }
-    };
     Billy.prototype.map = function () {
         // That's how the matrix is turned into a array
         // ------------------------------ ---------------- --------
@@ -133,6 +89,29 @@ var Billy = (function () {
         this.widthMeasures = this.widthMeasures - this.configuration.separation;
         return this.blocks;
     };
+    Billy.prototype.draw = function () {
+        var context = this.canvas.getContext("2d");
+        var canvasWidthAndWidth = this.canvas.width + this.configuration.width;
+        var canvasHeigthAndHeigth = this.canvas.height + this.configuration.heigth;
+        var inversedWidth = this.configuration.width * -1;
+        var inversedHeigth = this.configuration.heigth * -1;
+        this.blocks = this.map();
+        for (var _i = 0, _a = this.blocks; _i < _a.length; _i++) {
+            var block = _a[_i];
+            var outX = block.x < inversedWidth || block.x > canvasWidthAndWidth;
+            var outY = block.y < inversedHeigth || block.y > canvasHeigthAndHeigth;
+            if (outX || outY) {
+                continue;
+            }
+            if (block.selected) {
+                context.fillStyle = this.configuration.selectedColor;
+            }
+            else {
+                context.fillStyle = this.configuration.backgroundColor;
+            }
+            context.fillRect(block.x, block.y, block.width, block.height);
+        }
+    };
     Billy.prototype.behaviorDragging = function (e) {
         if (!this.isDragging) {
             return;
@@ -144,7 +123,7 @@ var Billy = (function () {
         var newY = x - this.mouseY;
         this.offsetX += (newX - newX * this.configuration.sensibility) * -1;
         this.offsetY = 0;
-        // this._offsetY += (newY - newY * this._configuration._sensibility) * -1;
+        // this.offsetY += (newY - newY * this.configuration.sensibility) * -1;
         this.mouseX = x;
         this.mouseY = y;
         if (this.widthMeasures < this.canvas.width) {
@@ -245,8 +224,6 @@ var Billy = (function () {
             }
         }
     };
-    Billy.prototype.behaviorEditing = function (e) {
-    };
     Billy.prototype.handleKeyDown = function (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -310,7 +287,6 @@ var Billy = (function () {
             this.behaviorDragging(e);
         }
         else {
-            this.behaviorEditing(e);
         }
     };
     Billy.prototype.handleMouseOut = function (e) {
