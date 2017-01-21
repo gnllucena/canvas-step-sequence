@@ -1,21 +1,23 @@
-class measure {
-    public _pulses: number;
-    public _rhythm: number;
+class Measure {
+    pulses: number;
+    rhythm: number;
 
     constructor(
-        pulses: number, 
-        rhythm: number) 
+        _pulses: number, 
+        _rhythm: number) 
     { 
-        if (pulses == null) {
-            this._pulses = 4;
-        } else {
-            this._pulses = pulses;
+        if (_pulses == undefined) {
+            this.pulses = 4;
+        } 
+        else {
+            this.pulses = _pulses;
         }
 
-        if (rhythm == null) {
-            this._rhythm = 1;
-        } else {
-            this._rhythm = rhythm;
+        if (_rhythm == undefined) {
+            this.rhythm = 1;
+        } 
+        else {
+            this.rhythm = _rhythm;
         }
     }
 }

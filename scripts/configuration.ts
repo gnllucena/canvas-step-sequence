@@ -1,80 +1,102 @@
-class configuration {
-    _frequencies: number;
-    _margin: number;
-    _width: number;
-    _heigth: number;
-    _border: number;
-    _separation: number;
-    _selectedColor: string;
-    _sensibility: number;
-    _backgroundColor: string;
-    _shortcuts: shortcuts;
+class Configuration {
+    frequencies: number;
+    margin: number;
+    width: number;
+    heigth: number;
+    border: number;
+    separation: number;
+    selectedColor: string;
+    sensibility: number;
+    backgroundColor: string;
+    shortcuts: Shortcuts;
 
     constructor(
-        frequencies: number,
-        margin: number,
-        width: number,
-        heigth: number,
-        border: number,
-        separation: number,
-        selectedColor: string,
-        backgroundColor: string,
-        sensibility: number) 
+        _frequencies: number,
+        _margin: number,
+        _width: number,
+        _heigth: number,
+        _border: number,
+        _separation: number,
+        _selectedColor: string,
+        _backgroundColor: string,
+        _sensibility: number,
+        _shortcuts: Shortcuts) 
     {
-        if (frequencies == null) {
-            this._frequencies = 7;
-        } else {
-            this._frequencies = frequencies;
+        if (_frequencies == undefined) {
+            this.frequencies = 7;
+        } 
+        else {
+            this.frequencies = _frequencies;
         }
         
-        if (margin == null) {
-            this._margin = 5;
-        } else {
-            this._margin = margin;
+        if (_margin == undefined) {
+            this.margin = 5;
+        } 
+        else {
+            this.margin = _margin;
         }
         
-        if (width == null) {
-            this._width = 40;
-        } else {
-            this._width = width;
+        if (_width == undefined) {
+            this.width = 40;
+        } 
+        else {
+            this.width = _width;
         }
         
-        if (heigth == null) {
-            this._heigth = 25;
-        } else {
-            this._heigth = heigth;
+        if (_heigth == undefined) {
+            this.heigth = 25;
+        } 
+        else {
+            this.heigth = _heigth;
         }
         
-        if (border == null) {
-            this._border = 5;
-        } else {
-            this._border = border;
+        if (_border == undefined) {
+            this.border = 5;
+        } 
+        else {
+            this.border = _border;
         }
         
-        if (separation == null) {
-            this._separation = 10;
-        } else {
-            this._separation = separation;
+        if (_separation == undefined) {
+            this.separation = 10;
+        } 
+        else {
+            this.separation = _separation;
         }
 
-        if (selectedColor == null) {
-            this._selectedColor = '#ff0000';
-        } else {
-            this._selectedColor = selectedColor;
+        if (_selectedColor == undefined) {
+            this.selectedColor = '#ff0000';
+        } 
+        else {
+            this.selectedColor = _selectedColor;
         }
 
-        if (backgroundColor == null) {
-            this._backgroundColor = '#EEEEEE';
+        if (_backgroundColor == undefined) {
+            this.backgroundColor = '#EEEEEE';
         } else {
-            this._backgroundColor = backgroundColor;
+            this.backgroundColor = _backgroundColor;
         }
 
-        if (sensibility == null) {
-            this._sensibility = 0.4;
-        } else {
-            this._sensibility = sensibility;
+        if (_sensibility == undefined) {
+            this.sensibility = 0.4;
+        } 
+        else {
+            this.sensibility = _sensibility;
         }
 
-        this._shortcuts = new shortcuts(null, null, null, null, null, null, null);
+        if (_shortcuts == undefined) {
+            this.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
+        } 
+        else {
+            this.shortcuts = new Shortcuts(
+                _shortcuts.moveSelectionUp,
+                _shortcuts.moveSelectionLeft,
+                _shortcuts.moveSelectionRight,
+                _shortcuts.moveSelectionDown,
+                _shortcuts.copySelection,
+                _shortcuts.pasteSelection,
+                _shortcuts.deleteSelection)
+        }
+        
     }
 }

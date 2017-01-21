@@ -8,92 +8,93 @@
 // ctrl + c / v: copia e cola
 // ctrl + shift + seta: aumenta mais um na direção
 // ctrl + shift + alt + number: transforma o motif
-var billy = (function () {
-    function billy(selector, config, measures) {
-        this._blocks = new Array();
-        this._pressed = new Array();
-        this._isDragging = false;
-        this._isClicking = false;
-        this._leftButtonClicked = false;
-        this._rightButtonClicked = false;
-        this._middleButtonClicked = false;
-        this._offsetX = 0;
-        this._offsetY = 0;
-        this._widthMeasures = 0;
-        this._heigthMeasures = 0;
-        this._measures = measures;
-        this._configuration = new configuration(config._frequencies, config._margin, config._width, config._heigth, config._border, config._separation, config._selectedColor, config._backgroundColor, config._sensibility);
-        if (this._configuration._shortcuts == null) {
-            this._configuration._shortcuts = new shortcuts(null, null, null, null, null, null, null);
+var Billy = (function () {
+    function Billy(_selector, _configuration, _measures) {
+        this.blocks = new Array();
+        this.pressed = new Array();
+        this.isDragging = false;
+        this.isClicking = false;
+        this.leftButtonClicked = false;
+        this.rightButtonClicked = false;
+        this.middleButtonClicked = false;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.widthMeasures = 0;
+        this.heigthMeasures = 0;
+        this.measures = _measures;
+        this.configuration = new Configuration(_configuration.frequencies, _configuration.margin, _configuration.width, _configuration.heigth, _configuration.border, _configuration.separation, _configuration.selectedColor, _configuration.backgroundColor, _configuration.sensibility, _configuration.shortcuts);
+        if (this.configuration.shortcuts == null) {
+            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
         }
         var that = this;
-        this._canvas = document.getElementById(selector);
-        this._canvas.addEventListener('keydown', function (e) {
+        this.canvas = document.getElementById(_selector);
+        this.canvas.addEventListener('keydown', function (e) {
             that.handleKeyDown(e);
             console.log('keydown handle called.');
         });
-        this._canvas.addEventListener('keyup', function (e) {
+        this.canvas.addEventListener('keyup', function (e) {
             that.handleKeyUp(e);
             console.log('keyup handle called.');
         });
-        this._canvas.addEventListener('mousedown', function (e) {
+        this.canvas.addEventListener('mousedown', function (e) {
             that.handleMouseDown(e);
             console.log('mousedown handle called.');
         });
-        this._canvas.addEventListener('mouseup', function (e) {
+        this.canvas.addEventListener('mouseup', function (e) {
             that.handleMouseUp(e);
             console.log('mouseup handle called.');
         });
-        this._canvas.addEventListener('mousemove', function (e) {
+        this.canvas.addEventListener('mousemove', function (e) {
             that.handleMouseMove(e);
             console.log('mousemove handle called.');
         });
-        this._canvas.addEventListener('mouseout', function (e) {
+        this.canvas.addEventListener('mouseout', function (e) {
             that.handleMouseOut(e);
             console.log('mouseout handle called.');
         });
-        this._canvas.oncontextmenu = function (e) {
+        this.canvas.oncontextmenu = function (e) {
             e.preventDefault();
         };
         var factor = 0.05;
-        var maxWidth = this._canvas.parentElement.offsetWidth - this._canvas.parentElement.offsetWidth * factor;
-        var maxHeigth = (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)) + this._configuration._margin * 2;
+        var maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * factor;
+        var maxHeigth = (this.configuration.heigth * this.configuration.frequencies) + (this.configuration.border * (this.configuration.frequencies + 1)) + this.configuration.margin * 2;
         window.addEventListener('resize', function () {
             // It's necessary to recalculate canvas width everytime the window is resized
-            that._canvas.width = that._canvas.parentElement.offsetWidth - that._canvas.parentElement.offsetWidth * factor;
-            that._canvas.height = maxHeigth;
-            that._offsetX = 0;
-            that._offsetY = 0;
+            that.canvas.width = that.canvas.parentElement.offsetWidth - that.canvas.parentElement.offsetWidth * factor;
+            that.canvas.height = maxHeigth;
+            that.offsetX = 0;
+            that.offsetY = 0;
             that.draw();
             console.log('resize handle called.');
         });
-        this._canvas.width = maxWidth;
-        this._canvas.height = maxHeigth;
+        this.canvas.width = maxWidth;
+        this.canvas.height = maxHeigth;
     }
-    billy.prototype.draw = function () {
-        var context = this._canvas.getContext("2d");
-        var canvasWidthAndWidth = this._canvas.width + this._configuration._width;
-        var canvasHeigthAndHeigth = this._canvas.height + this._configuration._heigth;
-        var inversedWidth = this._configuration._width * -1;
-        var inversedHeigth = this._configuration._heigth * -1;
-        this._blocks = this.blocks();
-        for (var _i = 0, _a = this._blocks; _i < _a.length; _i++) {
-            var block_1 = _a[_i];
-            var outX = block_1._x < inversedWidth || block_1._x > canvasWidthAndWidth;
-            var outY = block_1._y < inversedHeigth || block_1._y > canvasHeigthAndHeigth;
+    Billy.prototype.draw = function () {
+        var context = this.canvas.getContext("2d");
+        var canvasWidthAndWidth = this.canvas.width + this.configuration.width;
+        var canvasHeigthAndHeigth = this.canvas.height + this.configuration.heigth;
+        var inversedWidth = this.configuration.width * -1;
+        var inversedHeigth = this.configuration.heigth * -1;
+        this.blocks = this.map();
+        for (var _i = 0, _a = this.blocks; _i < _a.length; _i++) {
+            var block = _a[_i];
+            var outX = block.x < inversedWidth || block.x > canvasWidthAndWidth;
+            var outY = block.y < inversedHeigth || block.y > canvasHeigthAndHeigth;
             if (outX || outY) {
                 continue;
             }
-            if (block_1._selected) {
-                context.fillStyle = this._configuration._selectedColor;
+            if (block.selected) {
+                context.fillStyle = this.configuration.selectedColor;
             }
             else {
-                context.fillStyle = this._configuration._backgroundColor;
+                context.fillStyle = this.configuration.backgroundColor;
             }
-            context.fillRect(block_1._x, block_1._y, block_1._width, block_1._height);
+            context.fillRect(block.x, block.y, block.width, block.height);
         }
     };
-    billy.prototype.blocks = function () {
+    Billy.prototype.map = function () {
+        // That's how the matrix is turned into a array
         // ------------------------------ ---------------- --------
         // --  1  --  4  --  7  --  10 -- --  13 --  16 -- -- 19 --
         // ------------------------------ ---------------- --------
@@ -101,83 +102,83 @@ var billy = (function () {
         // ------------------------------ ---------------- --------
         // --  3  --  6  --  9  --  12 -- --  15 --  18 -- -- 21 --
         // ------------------------------ ---------------- --------
-        this._widthMeasures = 0;
+        this.widthMeasures = 0;
         var newBlocks = new Array();
-        var marginAndBorder = this._configuration._margin + this._configuration._border;
-        var widthAndBorder = this._configuration._width + this._configuration._border;
-        var heigthAndBorder = this._configuration._heigth + this._configuration._border;
-        var marginAndSeparation = this._configuration._margin + this._configuration._separation;
+        var marginAndBorder = this.configuration.margin + this.configuration.border;
+        var widthAndBorder = this.configuration.width + this.configuration.border;
+        var heigthAndBorder = this.configuration.heigth + this.configuration.border;
+        var marginAndSeparation = this.configuration.margin + this.configuration.separation;
         var heigthFrequencies = marginAndBorder;
-        for (var i = 0; i <= this._measures.length - 1; i++) {
-            var measure_1 = this._measures[i];
-            var pulsesTimesRhythm = measure_1._pulses * measure_1._rhythm;
-            var widthPulses = this._widthMeasures + marginAndBorder;
+        for (var i = 0; i <= this.measures.length - 1; i++) {
+            var measure = this.measures[i];
+            var pulsesTimesRhythm = measure.pulses * measure.rhythm;
+            var widthPulses = this.widthMeasures + marginAndBorder;
             for (var w = 0; w <= pulsesTimesRhythm - 1; w++) {
-                newBlocks.push(new block(widthPulses - this._offsetX, heigthFrequencies - this._offsetY, this._configuration._width, this._configuration._heigth));
-                for (var z = 1; z <= this._configuration._frequencies - 1; z++) {
+                newBlocks.push(new Block(widthPulses - this.offsetX, heigthFrequencies - this.offsetY, this.configuration.width, this.configuration.heigth));
+                for (var z = 1; z <= this.configuration.frequencies - 1; z++) {
                     heigthFrequencies += heigthAndBorder;
-                    newBlocks.push(new block(widthPulses - this._offsetX, heigthFrequencies - this._offsetY, this._configuration._width, this._configuration._heigth));
+                    newBlocks.push(new Block(widthPulses - this.offsetX, heigthFrequencies - this.offsetY, this.configuration.width, this.configuration.heigth));
                 }
                 widthPulses += widthAndBorder;
                 heigthFrequencies = marginAndBorder;
             }
             heigthFrequencies = marginAndBorder;
-            this._widthMeasures += (pulsesTimesRhythm * this._configuration._width) + ((pulsesTimesRhythm * this._configuration._border)) + marginAndSeparation;
+            this.widthMeasures += (pulsesTimesRhythm * this.configuration.width) + ((pulsesTimesRhythm * this.configuration.border)) + marginAndSeparation;
         }
-        for (var i = 0; i <= this._blocks.length - 1; i++) {
-            newBlocks[i]._selected = this._blocks[i]._selected;
+        for (var i = 0; i <= this.blocks.length - 1; i++) {
+            newBlocks[i].selected = this.blocks[i].selected;
         }
-        this._blocks = newBlocks;
+        this.blocks = newBlocks;
         // Because we don't have a separation in the end
-        this._widthMeasures = this._widthMeasures - this._configuration._separation;
-        return this._blocks;
+        this.widthMeasures = this.widthMeasures - this.configuration.separation;
+        return this.blocks;
     };
-    billy.prototype.behaviorDragging = function (e) {
-        if (!this._isDragging) {
+    Billy.prototype.behaviorDragging = function (e) {
+        if (!this.isDragging) {
             return;
         }
-        var rect = this._canvas.getBoundingClientRect();
+        var rect = this.canvas.getBoundingClientRect();
         var x = e.clientX - rect.left;
         var y = e.clientY - rect.top;
-        var newX = x - this._mouseX;
-        var newY = x - this._mouseY;
-        this._offsetX += (newX - newX * this._configuration._sensibility) * -1;
-        this._offsetY = 0;
+        var newX = x - this.mouseX;
+        var newY = x - this.mouseY;
+        this.offsetX += (newX - newX * this.configuration.sensibility) * -1;
+        this.offsetY = 0;
         // this._offsetY += (newY - newY * this._configuration._sensibility) * -1;
-        this._mouseX = x;
-        this._mouseY = y;
-        if (this._widthMeasures < this._canvas.width) {
+        this.mouseX = x;
+        this.mouseY = y;
+        if (this.widthMeasures < this.canvas.width) {
             // if sum of measures width is lesser than canvas width, we don't have to worry about offsets
-            this._offsetX = 0;
+            this.offsetX = 0;
         }
         else {
             // if it's not, we can't let the draw in canvas offset forever
-            if (this._offsetX > this._widthMeasures - this._canvas.width + this._configuration._margin + this._configuration._border) {
-                this._offsetX = this._widthMeasures - this._canvas.width + this._configuration._margin + this._configuration._border;
+            if (this.offsetX > this.widthMeasures - this.canvas.width + this.configuration.margin + this.configuration.border) {
+                this.offsetX = this.widthMeasures - this.canvas.width + this.configuration.margin + this.configuration.border;
             }
-            else if (this._offsetX < 1) {
-                this._offsetX = 0;
+            else if (this.offsetX < 1) {
+                this.offsetX = 0;
             }
         }
-        var context = this._canvas.getContext("2d");
-        context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+        var context = this.canvas.getContext("2d");
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.draw();
     };
-    billy.prototype.behaviorClicking = function (e) {
-        if (!this._isClicking || !this._leftButtonClicked) {
+    Billy.prototype.behaviorClicking = function (e) {
+        if (!this.isClicking || !this.leftButtonClicked) {
             return;
         }
-        var sorted = this.blocks().slice(0).sort(function (a, b) {
-            if (a._x > b._x) {
+        var sorted = this.map().slice(0).sort(function (a, b) {
+            if (a.x > b.x) {
                 return 1;
             }
-            else if (a._x < b._x) {
+            else if (a.x < b.x) {
                 return -1;
             }
-            if (a._y < b._y) {
+            if (a.y < b.y) {
                 return -1;
             }
-            else if (a._y > b._y) {
+            else if (a.y > b.y) {
                 return 1;
             }
             return 0;
@@ -187,14 +188,14 @@ var billy = (function () {
         // we don't need to check other blocks with the same x axis.
         var grouping = {};
         for (var i = 0; i <= length - 1; i++) {
-            var block_2 = sorted[i];
-            if (grouping[block_2._y] === undefined) {
-                grouping[block_2._y] = [block_2._y];
-                grouping[block_2._y].pop();
-                grouping[block_2._y].push(block_2._x);
+            var block = sorted[i];
+            if (grouping[block.y] === undefined) {
+                grouping[block.y] = [block.y];
+                grouping[block.y].pop();
+                grouping[block.y].push(block.x);
             }
             else {
-                grouping[block_2._y].push(block_2._x);
+                grouping[block.y].push(block.x);
             }
         }
         var exit = false;
@@ -207,245 +208,255 @@ var billy = (function () {
             var key = Object.keys(grouping)[i];
             var yofBlock = +key;
             // we don't have to handle blocks not written in the canvas
-            if (yofBlock < this._offsetY * -1) {
+            if (yofBlock < this.offsetY * -1) {
                 continue;
             }
             // click was in border or in margin
-            if (this._mouseY < yofBlock) {
+            if (this.mouseY < yofBlock) {
                 continue;
             }
             // must check if click was in range of a block
-            if (yofBlock - this._offsetY <= this._mouseY && this._mouseY < yofBlock + this._configuration._heigth) {
+            if (yofBlock - this.offsetY <= this.mouseY && this.mouseY < yofBlock + this.configuration.heigth) {
                 var xs = grouping[key];
                 for (var w = 0; w <= xs.length; w++) {
                     var xofBlock = xs[w];
                     // we don't have to handle blocks not written in the canvas
-                    if (xofBlock < this._offsetX * -1) {
+                    if (xofBlock < this.offsetX * -1) {
                         continue;
                     }
                     // click was in border or in margin
-                    if (this._mouseX < xofBlock) {
+                    if (this.mouseX < xofBlock) {
                         continue;
                     }
                     // found
-                    if (xofBlock - this._offsetX <= this._mouseX && this._mouseX < xofBlock + this._configuration._width) {
+                    if (xofBlock - this.offsetX <= this.mouseX && this.mouseX < xofBlock + this.configuration.width) {
                         exit = true;
-                        var context = this._canvas.getContext("2d");
-                        context.fillStyle = this._configuration._selectedColor;
-                        context.fillRect(xofBlock, yofBlock, this._configuration._width, this._configuration._heigth);
-                        var index = this._blocks.map(function (x) {
-                            return x._x.toString() + '-' + x._y;
+                        var context = this.canvas.getContext("2d");
+                        context.fillStyle = this.configuration.selectedColor;
+                        context.fillRect(xofBlock, yofBlock, this.configuration.width, this.configuration.heigth);
+                        var index = this.blocks.map(function (block) {
+                            return block.x.toString() + '-' + block.y;
                         }).indexOf(xofBlock.toString() + '-' + yofBlock.toString());
-                        var block_3 = this._blocks[index];
-                        block_3._selected = true;
+                        var block = this.blocks[index];
+                        block.selected = true;
                         break;
                     }
                 }
             }
         }
     };
-    billy.prototype.handleKeyDown = function (e) {
+    Billy.prototype.behaviorEditing = function (e) {
+    };
+    Billy.prototype.handleKeyDown = function (e) {
         e.preventDefault();
         e.stopPropagation();
     };
-    billy.prototype.handleKeyUp = function (e) {
+    Billy.prototype.handleKeyUp = function (e) {
         e.preventDefault();
         e.stopPropagation();
     };
-    billy.prototype.handleMouseDown = function (e) {
+    Billy.prototype.handleMouseDown = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        var rect = this._canvas.getBoundingClientRect();
+        var rect = this.canvas.getBoundingClientRect();
         var x = e.clientX - rect.left;
         var y = e.clientY - rect.top;
-        this._mouseX = x;
-        this._mouseY = y;
-        this._isDragging = true;
-        this._isClicking = true;
+        this.mouseX = x;
+        this.mouseY = y;
+        this.isDragging = true;
+        this.isClicking = true;
         switch (e.which) {
             case 1:
-                this._leftButtonClicked = true;
-                this._rightButtonClicked = false;
-                this._middleButtonClicked = false;
+                this.leftButtonClicked = true;
+                this.rightButtonClicked = false;
+                this.middleButtonClicked = false;
                 break;
             case 2:
-                this._leftButtonClicked = false;
-                this._rightButtonClicked = false;
-                this._middleButtonClicked = true;
+                this.leftButtonClicked = false;
+                this.rightButtonClicked = false;
+                this.middleButtonClicked = true;
                 break;
             case 3:
-                this._leftButtonClicked = false;
-                this._rightButtonClicked = true;
-                this._middleButtonClicked = false;
+                this.leftButtonClicked = false;
+                this.rightButtonClicked = true;
+                this.middleButtonClicked = false;
                 break;
             default:
-                this._leftButtonClicked = true;
-                this._rightButtonClicked = false;
-                this._middleButtonClicked = false;
+                this.leftButtonClicked = true;
+                this.rightButtonClicked = false;
+                this.middleButtonClicked = false;
                 break;
         }
     };
-    billy.prototype.handleMouseUp = function (e) {
+    Billy.prototype.handleMouseUp = function (e) {
         e.preventDefault();
         e.stopPropagation();
         this.behaviorClicking(e);
-        this._isDragging = false;
-        this._isClicking = false;
+        this.isDragging = false;
+        this.isClicking = false;
     };
-    billy.prototype.handleMouseMove = function (e) {
+    Billy.prototype.handleMouseMove = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        if (this._rightButtonClicked) {
+        if (this.leftButtonClicked) {
+            var rect = this.canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            this.mouseX = x;
+            this.mouseY = y;
+            this.behaviorClicking(e);
+        }
+        else if (this.rightButtonClicked) {
             this.behaviorDragging(e);
         }
         else {
-            var rect = this._canvas.getBoundingClientRect();
-            var x = e.clientX - rect.left;
-            var y = e.clientY - rect.top;
-            this._mouseX = x;
-            this._mouseY = y;
-            this.behaviorClicking(e);
+            this.behaviorEditing(e);
         }
     };
-    billy.prototype.handleMouseOut = function (e) {
+    Billy.prototype.handleMouseOut = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        this._isClicking = false;
-        this._isDragging = false;
+        this.isClicking = false;
+        this.isDragging = false;
     };
-    return billy;
+    return Billy;
 }());
-var block = (function () {
-    function block(x, y, width, height) {
-        this._x = x;
-        this._y = y;
-        this._width = width;
-        this._height = height;
-        this._selected = false;
+var Block = (function () {
+    function Block(_x, _y, _width, _height) {
+        this.x = _x;
+        this.y = _y;
+        this.width = _width;
+        this.height = _height;
+        this.selected = false;
     }
-    return block;
+    return Block;
 }());
-var configuration = (function () {
-    function configuration(frequencies, margin, width, heigth, border, separation, selectedColor, backgroundColor, sensibility) {
-        if (frequencies == null) {
-            this._frequencies = 7;
+var Configuration = (function () {
+    function Configuration(_frequencies, _margin, _width, _heigth, _border, _separation, _selectedColor, _backgroundColor, _sensibility, _shortcuts) {
+        if (_frequencies == undefined) {
+            this.frequencies = 7;
         }
         else {
-            this._frequencies = frequencies;
+            this.frequencies = _frequencies;
         }
-        if (margin == null) {
-            this._margin = 5;
-        }
-        else {
-            this._margin = margin;
-        }
-        if (width == null) {
-            this._width = 40;
+        if (_margin == undefined) {
+            this.margin = 5;
         }
         else {
-            this._width = width;
+            this.margin = _margin;
         }
-        if (heigth == null) {
-            this._heigth = 25;
-        }
-        else {
-            this._heigth = heigth;
-        }
-        if (border == null) {
-            this._border = 5;
+        if (_width == undefined) {
+            this.width = 40;
         }
         else {
-            this._border = border;
+            this.width = _width;
         }
-        if (separation == null) {
-            this._separation = 10;
-        }
-        else {
-            this._separation = separation;
-        }
-        if (selectedColor == null) {
-            this._selectedColor = '#ff0000';
+        if (_heigth == undefined) {
+            this.heigth = 25;
         }
         else {
-            this._selectedColor = selectedColor;
+            this.heigth = _heigth;
         }
-        if (backgroundColor == null) {
-            this._backgroundColor = '#EEEEEE';
-        }
-        else {
-            this._backgroundColor = backgroundColor;
-        }
-        if (sensibility == null) {
-            this._sensibility = 0.4;
+        if (_border == undefined) {
+            this.border = 5;
         }
         else {
-            this._sensibility = sensibility;
+            this.border = _border;
         }
-        this._shortcuts = new shortcuts(null, null, null, null, null, null, null);
-    }
-    return configuration;
-}());
-var measure = (function () {
-    function measure(pulses, rhythm) {
-        if (pulses == null) {
-            this._pulses = 4;
+        if (_separation == undefined) {
+            this.separation = 10;
         }
         else {
-            this._pulses = pulses;
+            this.separation = _separation;
         }
-        if (rhythm == null) {
-            this._rhythm = 1;
+        if (_selectedColor == undefined) {
+            this.selectedColor = '#ff0000';
         }
         else {
-            this._rhythm = rhythm;
+            this.selectedColor = _selectedColor;
+        }
+        if (_backgroundColor == undefined) {
+            this.backgroundColor = '#EEEEEE';
+        }
+        else {
+            this.backgroundColor = _backgroundColor;
+        }
+        if (_sensibility == undefined) {
+            this.sensibility = 0.4;
+        }
+        else {
+            this.sensibility = _sensibility;
+        }
+        if (_shortcuts == undefined) {
+            this.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
+        }
+        else {
+            this.shortcuts = new Shortcuts(_shortcuts.moveSelectionUp, _shortcuts.moveSelectionLeft, _shortcuts.moveSelectionRight, _shortcuts.moveSelectionDown, _shortcuts.copySelection, _shortcuts.pasteSelection, _shortcuts.deleteSelection);
         }
     }
-    return measure;
+    return Configuration;
 }());
-var shortcuts = (function () {
-    function shortcuts(moveSelectionUp, moveSelectionLeft, moveSelectionRight, moveSelectionDown, copySelection, pasteSelection, deleteSelection) {
-        if (moveSelectionUp == null) {
-            this._moveSelectionUp = [23, 54, 33];
+var Measure = (function () {
+    function Measure(_pulses, _rhythm) {
+        if (_pulses == undefined) {
+            this.pulses = 4;
         }
         else {
-            this._moveSelectionUp = moveSelectionUp;
+            this.pulses = _pulses;
         }
-        if (moveSelectionLeft == null) {
-            this._moveSelectionLeft = [23, 54, 33];
-        }
-        else {
-            this._moveSelectionLeft = moveSelectionLeft;
-        }
-        if (moveSelectionRight == null) {
-            this._moveSelectionRight = [23, 54, 33];
+        if (_rhythm == undefined) {
+            this.rhythm = 1;
         }
         else {
-            this._moveSelectionRight = moveSelectionRight;
-        }
-        if (moveSelectionDown == null) {
-            this._moveSelectionDown = [23, 54, 33];
-        }
-        else {
-            this._moveSelectionDown = moveSelectionDown;
-        }
-        if (copySelection == null) {
-            this._copySelection = [23, 54, 33];
-        }
-        else {
-            this._copySelection = copySelection;
-        }
-        if (pasteSelection == null) {
-            this._pasteSelection = [23, 54, 33];
-        }
-        else {
-            this._pasteSelection = pasteSelection;
-        }
-        if (deleteSelection == null) {
-            this._deleteSelection = [23, 54, 33];
-        }
-        else {
-            this._deleteSelection = deleteSelection;
+            this.rhythm = _rhythm;
         }
     }
-    return shortcuts;
+    return Measure;
+}());
+var Shortcuts = (function () {
+    function Shortcuts(_moveSelectionUp, _moveSelectionLeft, _moveSelectionRight, _moveSelectionDown, _copySelection, _pasteSelection, _deleteSelection) {
+        if (_moveSelectionUp == undefined) {
+            this.moveSelectionUp = [23, 54, 33];
+        }
+        else {
+            this.moveSelectionUp = _moveSelectionUp;
+        }
+        if (_moveSelectionLeft == undefined) {
+            this.moveSelectionLeft = [23, 54, 33];
+        }
+        else {
+            this.moveSelectionLeft = _moveSelectionLeft;
+        }
+        if (_moveSelectionRight == undefined) {
+            this.moveSelectionRight = [23, 54, 33];
+        }
+        else {
+            this.moveSelectionRight = _moveSelectionRight;
+        }
+        if (_moveSelectionDown == undefined) {
+            this.moveSelectionDown = [23, 54, 33];
+        }
+        else {
+            this.moveSelectionDown = _moveSelectionDown;
+        }
+        if (_copySelection == undefined) {
+            this.copySelection = [23, 54, 33];
+        }
+        else {
+            this.copySelection = _copySelection;
+        }
+        if (_pasteSelection == undefined) {
+            this.pasteSelection = [23, 54, 33];
+        }
+        else {
+            this.pasteSelection = _pasteSelection;
+        }
+        if (_deleteSelection == undefined) {
+            this.deleteSelection = [23, 54, 33];
+        }
+        else {
+            this.deleteSelection = _deleteSelection;
+        }
+    }
+    return Shortcuts;
 }());

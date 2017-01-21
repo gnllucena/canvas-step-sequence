@@ -10,137 +10,139 @@
 // ctrl + shift + seta: aumenta mais um na direção
 // ctrl + shift + alt + number: transforma o motif
 
-class billy {
-    _canvas : HTMLCanvasElement;
-    _configuration : configuration;
-    _measures : Array<measure>;
-    _blocks: Array<block> = new Array<block>();
-    _pressed: Array<number> = new Array<number>();
+class Billy {
+    canvas : HTMLCanvasElement;
+    configuration : Configuration;
+    measures : Array<Measure>;
+    blocks: Array<Block> = new Array<Block>();
+    pressed: Array<number> = new Array<number>();
 
-    _isDragging: boolean = false;
-    _isClicking: boolean = false;
+    isDragging: boolean = false;
+    isClicking: boolean = false;
 
-    _leftButtonClicked: boolean = false;
-    _rightButtonClicked: boolean = false;
-    _middleButtonClicked: boolean = false;
+    leftButtonClicked: boolean = false;
+    rightButtonClicked: boolean = false;
+    middleButtonClicked: boolean = false;
 
-    _offsetX: number = 0;
-    _offsetY: number = 0;
-    _mouseX: number;
-    _mouseY: number;
+    offsetX: number = 0;
+    offsetY: number = 0;
+    mouseX: number;
+    mouseY: number;
 
-    _widthMeasures: number = 0;
-    _heigthMeasures: number = 0;
+    widthMeasures: number = 0;
+    heigthMeasures: number = 0;
 
     constructor(
-        selector: string, 
-        config: configuration, 
-        measures: Array<measure>) 
+        _selector: string, 
+        _configuration: Configuration, 
+        _measures: Array<Measure>) 
     {
-        this._measures = measures;
+        this.measures = _measures;
 
-        this._configuration = new configuration(
-            config._frequencies, 
-            config._margin, 
-            config._width, 
-            config._heigth, 
-            config._border, 
-            config._separation, 
-            config._selectedColor, 
-            config._backgroundColor,
-            config._sensibility);
+        this.configuration = new Configuration(
+            _configuration.frequencies,
+            _configuration.margin, 
+            _configuration.width, 
+            _configuration.heigth, 
+            _configuration.border, 
+            _configuration.separation, 
+            _configuration.selectedColor, 
+            _configuration.backgroundColor,
+            _configuration.sensibility,
+            _configuration.shortcuts);
 
-        if (this._configuration._shortcuts == null) {
-            this._configuration._shortcuts = new shortcuts(null, null, null, null, null, null, null);
+        if (this.configuration.shortcuts == null) {
+            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
         }
 
         let that = this;
 
-        this._canvas = <HTMLCanvasElement> document.getElementById(selector);
+        this.canvas = <HTMLCanvasElement> document.getElementById(_selector);
             
-        this._canvas.addEventListener('keydown', function(e) { 
+        this.canvas.addEventListener('keydown', function(e) { 
             that.handleKeyDown(e); 
             console.log('keydown handle called.');
         });
 
-        this._canvas.addEventListener('keyup', function(e) { 
+        this.canvas.addEventListener('keyup', function(e) { 
             that.handleKeyUp(e); 
             console.log('keyup handle called.');
         });
 
-        this._canvas.addEventListener('mousedown', function(e) { 
+        this.canvas.addEventListener('mousedown', function(e) { 
             that.handleMouseDown(e);
             console.log('mousedown handle called.');
         });
 
-        this._canvas.addEventListener('mouseup', function(e) { 
+        this.canvas.addEventListener('mouseup', function(e) { 
             that.handleMouseUp(e); 
             console.log('mouseup handle called.');
         });
 
-        this._canvas.addEventListener('mousemove', function(e) { 
+        this.canvas.addEventListener('mousemove', function(e) { 
             that.handleMouseMove(e); 
             console.log('mousemove handle called.');
         });
 
-        this._canvas.addEventListener('mouseout', function(e) { 
+        this.canvas.addEventListener('mouseout', function(e) { 
             that.handleMouseOut(e); 
             console.log('mouseout handle called.');
         });
 
-        this._canvas.oncontextmenu = function (e) {
+        this.canvas.oncontextmenu = function (e) {
             e.preventDefault();
         };
 
         let factor = 0.05;
-        let maxWidth = this._canvas.parentElement.offsetWidth - this._canvas.parentElement.offsetWidth * factor;
-        let maxHeigth = (this._configuration._heigth * this._configuration._frequencies) + (this._configuration._border * (this._configuration._frequencies + 1)) + this._configuration._margin * 2;
+        let maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * factor;
+        let maxHeigth = (this.configuration.heigth * this.configuration.frequencies) + (this.configuration.border * (this.configuration.frequencies + 1)) + this.configuration.margin * 2;
         
         window.addEventListener('resize', function() {
             // It's necessary to recalculate canvas width everytime the window is resized
-            that._canvas.width = that._canvas.parentElement.offsetWidth - that._canvas.parentElement.offsetWidth * factor;
-            that._canvas.height = maxHeigth;
+            that.canvas.width = that.canvas.parentElement.offsetWidth - that.canvas.parentElement.offsetWidth * factor;
+            that.canvas.height = maxHeigth;
 
-            that._offsetX = 0;
-            that._offsetY = 0;
+            that.offsetX = 0;
+            that.offsetY = 0;
 
             that.draw();
             console.log('resize handle called.');
         });
 
-        this._canvas.width = maxWidth;
-        this._canvas.height = maxHeigth;
+        this.canvas.width = maxWidth;
+        this.canvas.height = maxHeigth;
     }
 
     draw() {
-        let context = this._canvas.getContext("2d");
+        let context = this.canvas.getContext("2d");
 
-        let canvasWidthAndWidth = this._canvas.width + this._configuration._width;
-        let canvasHeigthAndHeigth = this._canvas.height + this._configuration._heigth;
-        let inversedWidth = this._configuration._width * -1
-        let inversedHeigth = this._configuration._heigth * -1;
+        let canvasWidthAndWidth = this.canvas.width + this.configuration.width;
+        let canvasHeigthAndHeigth = this.canvas.height + this.configuration.heigth;
+        let inversedWidth = this.configuration.width * -1
+        let inversedHeigth = this.configuration.heigth * -1;
 
-        this._blocks = this.blocks();
+        this.blocks = this.map();
 
-        for (let block of this._blocks) {
-            let outX = block._x < inversedWidth || block._x > canvasWidthAndWidth;
-            let outY = block._y < inversedHeigth || block._y > canvasHeigthAndHeigth;
+        for (let block of this.blocks) {
+            let outX = block.x < inversedWidth || block.x > canvasWidthAndWidth;
+            let outY = block.y < inversedHeigth || block.y > canvasHeigthAndHeigth;
 
             if (outX || outY) {
                 continue;
             }
 
-            if (block._selected) {
-                context.fillStyle = this._configuration._selectedColor;
+            if (block.selected) {
+                context.fillStyle = this.configuration.selectedColor;
             } else {
-                context.fillStyle = this._configuration._backgroundColor;
+                context.fillStyle = this.configuration.backgroundColor;
             }
 
-            context.fillRect(block._x, block._y, block._width, block._height);
+            context.fillRect(block.x, block.y, block.width, block.height);
         }
     }
 
-    blocks() {
+    map() {
+        // That's how the matrix is turned into a array
         // ------------------------------ ---------------- --------
         // --  1  --  4  --  7  --  10 -- --  13 --  16 -- -- 19 --
         // ------------------------------ ---------------- --------
@@ -148,30 +150,30 @@ class billy {
         // ------------------------------ ---------------- --------
         // --  3  --  6  --  9  --  12 -- --  15 --  18 -- -- 21 --
         // ------------------------------ ---------------- --------
-        this._widthMeasures = 0;
+        this.widthMeasures = 0;
 
-        let newBlocks = new Array<block>();
+        let newBlocks = new Array<Block>();
 
-        let marginAndBorder = this._configuration._margin + this._configuration._border;
-        let widthAndBorder = this._configuration._width + this._configuration._border;
-        let heigthAndBorder = this._configuration._heigth + this._configuration._border;
-        let marginAndSeparation = this._configuration._margin + this._configuration._separation;
+        let marginAndBorder = this.configuration.margin + this.configuration.border;
+        let widthAndBorder = this.configuration.width + this.configuration.border;
+        let heigthAndBorder = this.configuration.heigth + this.configuration.border;
+        let marginAndSeparation = this.configuration.margin + this.configuration.separation;
 
         let heigthFrequencies = marginAndBorder;
         
-        for (let i = 0; i <= this._measures.length - 1; i++) {
-            let measure = this._measures[i];
+        for (let i = 0; i <= this.measures.length - 1; i++) {
+            let measure = this.measures[i];
 
-            let pulsesTimesRhythm = measure._pulses * measure._rhythm;
-            let widthPulses = this._widthMeasures + marginAndBorder;
+            let pulsesTimesRhythm = measure.pulses * measure.rhythm;
+            let widthPulses = this.widthMeasures + marginAndBorder;
 
             for (let w = 0; w <= pulsesTimesRhythm - 1; w++) {
-                newBlocks.push(new block(widthPulses - this._offsetX, heigthFrequencies - this._offsetY, this._configuration._width, this._configuration._heigth));
+                newBlocks.push(new Block(widthPulses - this.offsetX, heigthFrequencies - this.offsetY, this.configuration.width, this.configuration.heigth));
 
-                for (let z = 1; z <= this._configuration._frequencies - 1; z++) {
+                for (let z = 1; z <= this.configuration.frequencies - 1; z++) {
                     heigthFrequencies += heigthAndBorder;
 
-                    newBlocks.push(new block(widthPulses - this._offsetX, heigthFrequencies - this._offsetY, this._configuration._width, this._configuration._heigth));
+                    newBlocks.push(new Block(widthPulses - this.offsetX, heigthFrequencies - this.offsetY, this.configuration.width, this.configuration.heigth));
                 }
 
                 widthPulses += widthAndBorder;
@@ -180,74 +182,76 @@ class billy {
 
             heigthFrequencies = marginAndBorder;
 
-            this._widthMeasures += (pulsesTimesRhythm * this._configuration._width) + ((pulsesTimesRhythm * this._configuration._border)) + marginAndSeparation;
+            this.widthMeasures += (pulsesTimesRhythm * this.configuration.width) + ((pulsesTimesRhythm * this.configuration.border)) + marginAndSeparation;
         }
 
-        for (let i = 0; i <= this._blocks.length - 1; i++) {
-            newBlocks[i]._selected = this._blocks[i]._selected;
+        for (let i = 0; i <= this.blocks.length - 1; i++) {
+            newBlocks[i].selected = this.blocks[i].selected;
         }
 
-        this._blocks = newBlocks;
+        this.blocks = newBlocks;
         
         // Because we don't have a separation in the end
-        this._widthMeasures = this._widthMeasures - this._configuration._separation;
+        this.widthMeasures = this.widthMeasures - this.configuration.separation;
 
-        return this._blocks;
+        return this.blocks;
     }
 
     behaviorDragging(e) {
-        if (!this._isDragging) {
+        if (!this.isDragging) {
             return;
         }
 
-        var rect = this._canvas.getBoundingClientRect();    
+        var rect = this.canvas.getBoundingClientRect();    
 
         let x = e.clientX - rect.left;
         let y = e.clientY - rect.top;
 
-        let newX = x - this._mouseX;
-        let newY = x - this._mouseY;
+        let newX = x - this.mouseX;
+        let newY = x - this.mouseY;
 
-        this._offsetX += (newX - newX * this._configuration._sensibility) * -1;
-        this._offsetY = 0
+        this.offsetX += (newX - newX * this.configuration.sensibility) * -1;
+        this.offsetY = 0
         // this._offsetY += (newY - newY * this._configuration._sensibility) * -1;
 
-        this._mouseX = x; 
-        this._mouseY = y;
+        this.mouseX = x; 
+        this.mouseY = y;
 
-        if (this._widthMeasures < this._canvas.width) { 
+        if (this.widthMeasures < this.canvas.width) { 
             // if sum of measures width is lesser than canvas width, we don't have to worry about offsets
-            this._offsetX = 0;
-        } else {
+            this.offsetX = 0;
+        } 
+        else {
             // if it's not, we can't let the draw in canvas offset forever
-            if (this._offsetX > this._widthMeasures - this._canvas.width + this._configuration._margin + this._configuration._border) {
-                this._offsetX = this._widthMeasures - this._canvas.width + this._configuration._margin + this._configuration._border;
-            } else if (this._offsetX < 1) {
-                this._offsetX = 0;
+            if (this.offsetX > this.widthMeasures - this.canvas.width + this.configuration.margin + this.configuration.border) {
+                this.offsetX = this.widthMeasures - this.canvas.width + this.configuration.margin + this.configuration.border;
+            } 
+            else if (this.offsetX < 1) {
+                this.offsetX = 0;
             }
         }
 
-        let context = this._canvas.getContext("2d");
-        context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+        let context = this.canvas.getContext("2d");
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.draw();
     }
 
     behaviorClicking(e) {
-        if (!this._isClicking || !this._leftButtonClicked) {
+        if (!this.isClicking || !this.leftButtonClicked) {
             return;
         }
 
-        let sorted: Array<block> = this.blocks().slice(0).sort(function(a, b) { 
-            if (a._x > b._x) {
+        let sorted: Array<Block> = this.map().slice(0).sort(function(a, b) { 
+            if (a.x > b.x) {
                 return 1;
-            } else if (a._x < b._x) {
+            } else if (a.x < b.x) {
                 return -1;
             }
 
-            if (a._y < b._y) {
+            if (a.y < b.y) {
                 return -1;
-            } else if (a._y > b._y) {
+            } else if (a.y > b.y) {
                 return 1;
             }
             
@@ -261,16 +265,15 @@ class billy {
         let grouping = { };
 
         for (let i = 0; i <= length - 1; i++) {
-            let block: block = sorted[i];
+            let block: Block = sorted[i];
 
-            if (grouping[block._y] === undefined) {
-                grouping[block._y] = [block._y];
-                grouping[block._y].pop();
-                grouping[block._y].push(block._x);
+            if (grouping[block.y] === undefined) {
+                grouping[block.y] = [block.y];
+                grouping[block.y].pop();
+                grouping[block.y].push(block.x);            
             }
-            else 
-            {
-                grouping[block._y].push(block._x);
+            else {
+                grouping[block.y].push(block.x);
             }
         }
 
@@ -288,53 +291,56 @@ class billy {
             let yofBlock:number = +key;
 
             // we don't have to handle blocks not written in the canvas
-            if (yofBlock < this._offsetY * -1) {
+            if (yofBlock < this.offsetY * -1) {
                 continue;
             }
 
             // click was in border or in margin
-            if (this._mouseY < yofBlock) {
+            if (this.mouseY < yofBlock) {
                 continue;
             }
             
             // must check if click was in range of a block
-            if (yofBlock - this._offsetY  <= this._mouseY && this._mouseY < yofBlock + this._configuration._heigth) {
+            if (yofBlock - this.offsetY  <= this.mouseY && this.mouseY < yofBlock + this.configuration.heigth) {
                 let xs:[number] = grouping[key];
 
                 for (let w = 0; w <= xs.length; w++) {
                     let xofBlock:number = xs[w];
 
                     // we don't have to handle blocks not written in the canvas
-                    if (xofBlock < this._offsetX * -1) {
+                    if (xofBlock < this.offsetX * -1) {
                         continue;
                     }
 
                     // click was in border or in margin
-                    if (this._mouseX < xofBlock) {
+                    if (this.mouseX < xofBlock) {
                         continue;
                     }
 
                     // found
-                    if (xofBlock - this._offsetX <= this._mouseX && this._mouseX < xofBlock + this._configuration._width) {
+                    if (xofBlock - this.offsetX <= this.mouseX && this.mouseX < xofBlock + this.configuration.width) {
                         exit = true;
                         
-                        let context = this._canvas.getContext("2d");
+                        let context = this.canvas.getContext("2d");
 
-                        context.fillStyle = this._configuration._selectedColor;
-                        context.fillRect(xofBlock, yofBlock, this._configuration._width, this._configuration._heigth);
+                        context.fillStyle = this.configuration.selectedColor;
+                        context.fillRect(xofBlock, yofBlock, this.configuration.width, this.configuration.heigth);
                         
-                        var index = this._blocks.map(function (x) {
-                            return x._x.toString() + '-' + x._y;
+                        var index = this.blocks.map(function (block) {
+                            return block.x.toString() + '-' + block.y;
                         }).indexOf(xofBlock.toString() + '-' + yofBlock.toString());
 
-                        let block = this._blocks[index];
-                        block._selected = true;
+                        let block = this.blocks[index];
+                        block.selected = true;
 
                         break;
                     }
                 }
             }
         }
+    }
+
+    behaviorEditing(e) {
     }
     
     handleKeyDown(e) {
@@ -351,36 +357,36 @@ class billy {
         e.preventDefault();
         e.stopPropagation();
 
-        let rect = this._canvas.getBoundingClientRect();
+        let rect = this.canvas.getBoundingClientRect();
 
         let x = e.clientX - rect.left;
         let y = e.clientY - rect.top;
 
-        this._mouseX = x; 
-        this._mouseY = y;
-        this._isDragging = true;
-        this._isClicking = true;
+        this.mouseX = x; 
+        this.mouseY = y;
+        this.isDragging = true;
+        this.isClicking = true;
 
         switch (e.which) {
             case 1:
-                this._leftButtonClicked = true;
-                this._rightButtonClicked = false;
-                this._middleButtonClicked = false;
+                this.leftButtonClicked = true;
+                this.rightButtonClicked = false;
+                this.middleButtonClicked = false;
                 break;
             case 2:
-                this._leftButtonClicked = false;
-                this._rightButtonClicked = false;
-                this._middleButtonClicked = true;
+                this.leftButtonClicked = false;
+                this.rightButtonClicked = false;
+                this.middleButtonClicked = true;
                 break;
             case 3:
-                this._leftButtonClicked = false;
-                this._rightButtonClicked = true;
-                this._middleButtonClicked = false;
+                this.leftButtonClicked = false;
+                this.rightButtonClicked = true;
+                this.middleButtonClicked = false;
                 break;
             default: 
-                this._leftButtonClicked = true;
-                this._rightButtonClicked = false;
-                this._middleButtonClicked = false;
+                this.leftButtonClicked = true;
+                this.rightButtonClicked = false;
+                this.middleButtonClicked = false;
                 break;
         }
     }
@@ -391,25 +397,29 @@ class billy {
 
         this.behaviorClicking(e);
 
-        this._isDragging = false;
-        this._isClicking = false;
+        this.isDragging = false;
+        this.isClicking = false;
     }
 
     handleMouseMove(e) {
         e.preventDefault();
         e.stopPropagation();
 
-        if (this._rightButtonClicked) {
-            this.behaviorDragging(e);
-        } else {
-            let rect = this._canvas.getBoundingClientRect();
+        if (this.leftButtonClicked) {
+            let rect = this.canvas.getBoundingClientRect();
             let x = e.clientX - rect.left;
             let y = e.clientY - rect.top;
 
-            this._mouseX = x; 
-            this._mouseY = y;
+            this.mouseX = x; 
+            this.mouseY = y;
 
             this.behaviorClicking(e);
+        } 
+        else if (this.rightButtonClicked) {
+            this.behaviorDragging(e);
+        }
+        else {
+            this.behaviorEditing(e);
         }
     }
 
@@ -417,7 +427,7 @@ class billy {
         e.preventDefault();
         e.stopPropagation();
         
-        this._isClicking = false;
-        this._isDragging = false;
+        this.isClicking = false;
+        this.isDragging = false;
     }
 }

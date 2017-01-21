@@ -1,20 +1,20 @@
-class block {
-    _x: number;
-    _y: number;
-    _width: number;
-    _height: number;
-    _selected: boolean;
+class Block {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    selected: boolean;
 
     constructor(
-        x: number, 
-        y: number, 
-        width: number, 
-        height: number) 
+        _x: number, 
+        _y: number, 
+        _width: number, 
+        _height: number) 
     {
-        this._x = x;
-        this._y = y;
-        this._width = width;
-        this._height = height;
-        this._selected = false;
+        this.x = _x;
+        this.y = _y;
+        this.width = _width;
+        this.height = _height;
+        this.selected = false;
     }
 }
