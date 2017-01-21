@@ -15,7 +15,7 @@ class billy {
     _configuration : configuration;
     _measures : Array<measure>;
     _blocks: Array<block> = new Array<block>();
-    _pressed: Array[number] = new Array<number>();
+    _pressed: Array<number> = new Array<number>();
 
     _isDragging: boolean = false;
     _isClicking: boolean = false;
@@ -82,11 +82,11 @@ class billy {
             that.handleMouseMove(e); 
             console.log('mousemove handle called.');
         });
-        
-        this._canvas.addEventListener('contextmenu', function(e) { 
-            that.handleContextMenu(e); 
-            console.log('contextmenu handle called.');
-        }, false);
+
+        this._canvas.addEventListener('mouseout', function(e) { 
+            that.handleMouseOut(e); 
+            console.log('mouseout handle called.');
+        });
 
         this._canvas.oncontextmenu = function (e) {
             e.preventDefault();
@@ -215,8 +215,6 @@ class billy {
         this._mouseX = x; 
         this._mouseY = y;
 
-        let margin = 10;
-
         if (this._widthMeasures < this._canvas.width) { 
             // if sum of measures width is lesser than canvas width, we don't have to worry about offsets
             this._offsetX = 0;
@@ -256,19 +254,26 @@ class billy {
             return 0;
         });
 
+        let length = Object.keys(sorted).length;
+
         // group object by x axis, if click was before this axis
         // we don't need to check other blocks with the same x axis.
         let grouping = { };
 
-        for (let block of sorted) {
+        for (let i = 0; i <= length - 1; i++) {
+            let block: block = sorted[i];
+
             if (grouping[block._y] === undefined) {
                 grouping[block._y] = [block._y];
+                grouping[block._y].pop();
+                grouping[block._y].push(block._x);
             }
-
-            grouping[block._y].push(block._x);
+            else 
+            {
+                grouping[block._y].push(block._x);
+            }
         }
 
-        let length = Object.keys(grouping).length;
         let exit:boolean = false;
 
         // let's find out clicked block
@@ -283,7 +288,7 @@ class billy {
             let yofBlock:number = +key;
 
             // we don't have to handle blocks not written in the canvas
-            if (yofBlock < 0) {
+            if (yofBlock < this._offsetY * -1) {
                 continue;
             }
 
@@ -293,13 +298,14 @@ class billy {
             }
             
             // must check if click was in range of a block
-            if (yofBlock <= this._mouseY && this._mouseY < yofBlock + this._configuration._width) {
+            if (yofBlock - this._offsetY  <= this._mouseY && this._mouseY < yofBlock + this._configuration._heigth) {
                 let xs:[number] = grouping[key];
 
                 for (let w = 0; w <= xs.length; w++) {
                     let xofBlock:number = xs[w];
 
-                    if (xofBlock < 0) {
+                    // we don't have to handle blocks not written in the canvas
+                    if (xofBlock < this._offsetX * -1) {
                         continue;
                     }
 
@@ -309,7 +315,7 @@ class billy {
                     }
 
                     // found
-                    if (xofBlock <= this._mouseX && this._mouseX < xofBlock + this._configuration._width) {
+                    if (xofBlock - this._offsetX <= this._mouseX && this._mouseX < xofBlock + this._configuration._width) {
                         exit = true;
                         
                         let context = this._canvas.getContext("2d");
@@ -407,6 +413,11 @@ class billy {
         }
     }
 
-    handleContextMenu(e) {
+    handleMouseOut(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        this._isClicking = false;
+        this._isDragging = false;
     }
 }

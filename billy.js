@@ -48,10 +48,10 @@ var billy = (function () {
             that.handleMouseMove(e);
             console.log('mousemove handle called.');
         });
-        this._canvas.addEventListener('contextmenu', function (e) {
-            that.handleContextMenu(e);
-            console.log('contextmenu handle called.');
-        }, false);
+        this._canvas.addEventListener('mouseout', function (e) {
+            that.handleMouseOut(e);
+            console.log('mouseout handle called.');
+        });
         this._canvas.oncontextmenu = function (e) {
             e.preventDefault();
         };
@@ -146,7 +146,6 @@ var billy = (function () {
         // this._offsetY += (newY - newY * this._configuration._sensibility) * -1;
         this._mouseX = x;
         this._mouseY = y;
-        var margin = 10;
         if (this._widthMeasures < this._canvas.width) {
             // if sum of measures width is lesser than canvas width, we don't have to worry about offsets
             this._offsetX = 0;
@@ -183,17 +182,21 @@ var billy = (function () {
             }
             return 0;
         });
+        var length = Object.keys(sorted).length;
         // group object by x axis, if click was before this axis
         // we don't need to check other blocks with the same x axis.
         var grouping = {};
-        for (var _i = 0, sorted_1 = sorted; _i < sorted_1.length; _i++) {
-            var block_2 = sorted_1[_i];
+        for (var i = 0; i <= length - 1; i++) {
+            var block_2 = sorted[i];
             if (grouping[block_2._y] === undefined) {
                 grouping[block_2._y] = [block_2._y];
+                grouping[block_2._y].pop();
+                grouping[block_2._y].push(block_2._x);
             }
-            grouping[block_2._y].push(block_2._x);
+            else {
+                grouping[block_2._y].push(block_2._x);
+            }
         }
-        var length = Object.keys(grouping).length;
         var exit = false;
         // let's find out clicked block
         // this may be improved
@@ -204,7 +207,7 @@ var billy = (function () {
             var key = Object.keys(grouping)[i];
             var yofBlock = +key;
             // we don't have to handle blocks not written in the canvas
-            if (yofBlock < 0) {
+            if (yofBlock < this._offsetY * -1) {
                 continue;
             }
             // click was in border or in margin
@@ -212,11 +215,12 @@ var billy = (function () {
                 continue;
             }
             // must check if click was in range of a block
-            if (yofBlock <= this._mouseY && this._mouseY < yofBlock + this._configuration._width) {
+            if (yofBlock - this._offsetY <= this._mouseY && this._mouseY < yofBlock + this._configuration._heigth) {
                 var xs = grouping[key];
                 for (var w = 0; w <= xs.length; w++) {
                     var xofBlock = xs[w];
-                    if (xofBlock < 0) {
+                    // we don't have to handle blocks not written in the canvas
+                    if (xofBlock < this._offsetX * -1) {
                         continue;
                     }
                     // click was in border or in margin
@@ -224,7 +228,7 @@ var billy = (function () {
                         continue;
                     }
                     // found
-                    if (xofBlock <= this._mouseX && this._mouseX < xofBlock + this._configuration._width) {
+                    if (xofBlock - this._offsetX <= this._mouseX && this._mouseX < xofBlock + this._configuration._width) {
                         exit = true;
                         var context = this._canvas.getContext("2d");
                         context.fillStyle = this._configuration._selectedColor;
@@ -303,7 +307,11 @@ var billy = (function () {
             this.behaviorClicking(e);
         }
     };
-    billy.prototype.handleContextMenu = function (e) {
+    billy.prototype.handleMouseOut = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this._isClicking = false;
+        this._isDragging = false;
     };
     return billy;
 }());
