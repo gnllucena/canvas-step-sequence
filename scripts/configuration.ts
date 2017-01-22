@@ -1,4 +1,5 @@
 class Configuration {
+    selector: string;
     frequencies: number;
     margin: number;
     width: number;
@@ -11,6 +12,7 @@ class Configuration {
     shortcuts: Shortcuts;
 
     constructor(
+        _selector: string,
         _frequencies: number,
         _margin: number,
         _width: number,
@@ -22,6 +24,13 @@ class Configuration {
         _sensibility: number,
         _shortcuts: Shortcuts) 
     {
+        if (_selector == undefined) {
+            this.selector = "canvas";
+        }
+        else {
+            this.selector = _selector;
+        }
+
         if (_frequencies == undefined) {
             this.frequencies = 7;
         } 
@@ -95,7 +104,7 @@ class Configuration {
                 _shortcuts.moveSelectionDown,
                 _shortcuts.copySelection,
                 _shortcuts.pasteSelection,
-                _shortcuts.deleteSelection)
+                _shortcuts.deleteSelection);
         }
         
     }

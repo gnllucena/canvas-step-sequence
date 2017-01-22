@@ -7,8 +7,8 @@
         </style>
     </head>
     <body style="background: #3695B2;">
-        <canvas id="canvas" style="border: 3px solid #66DBFF"></canvas>
-        
+        <canvas id="canvas" tabindex="1" style="border: 3px solid #66DBFF"></canvas>
+
         <script src="billy.js"></script>
         <script type="text/javascript">
             var measures = [
@@ -18,9 +18,9 @@
                 new Measure(8, 1)
             ];
 
-            var config = new Configuration(7, 0, 70, 40, 5, 30, '#CCC23F', '#66DBFF', 0.2);
+            var configuration = new Configuration('canvas', 7, 0, 70, 40, 5, 30, '#CCC23F', '#66DBFF', 0.2);
 
-            var cvs = new Billy('canvas', config, measures);
+            var billy = new Billy(configuration, measures);
         </script>
     </body>
 </html>

@@ -1,53 +1,33 @@
-// playback:
-// linha vertical do play vai até 50% do canvas 
-// canvas começa a deslizar até o final
-// linha vertical do play vai até 100% do canvas
-// shortcuts:
-// shift + click: joga no array de seleções o quadrado selecionado
-// shift + drag: joga no array de seleções os quadrados selecionados
-// ctrl + c / v: copia e cola
-// ctrl + shift + seta: aumenta mais um na direção
-// ctrl + shift + alt + number: transforma o motif
 var Billy = (function () {
-    function Billy(_selector, _configuration, _measures) {
+    function Billy(_configuration, _measures) {
         this.blocks = new Array();
         this.pressed = new Array();
         this.isDragging = false;
         this.isClicking = false;
-        this.leftButtonClicked = false;
-        this.rightButtonClicked = false;
-        this.middleButtonClicked = false;
+        this.mouseLeftButtonClicked = false;
+        this.mouseRightButtonClicked = false;
+        this.mouseMiddleButtonClicked = false;
         this.offsetX = 0;
         this.offsetY = 0;
         this.widthMeasures = 0;
         this.heigthMeasures = 0;
         this.measures = _measures;
-        this.configuration = new Configuration(_configuration.frequencies, _configuration.margin, _configuration.width, _configuration.heigth, _configuration.border, _configuration.separation, _configuration.selectedColor, _configuration.backgroundColor, _configuration.sensibility, _configuration.shortcuts);
+        this.configuration = new Configuration(_configuration.selector, _configuration.frequencies, _configuration.margin, _configuration.width, _configuration.heigth, _configuration.border, _configuration.separation, _configuration.selectedColor, _configuration.backgroundColor, _configuration.sensibility, _configuration.shortcuts);
         if (this.configuration.shortcuts == null) {
             this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
         }
-        this.canvas = document.getElementById(_selector);
-        this.canvas.addEventListener('keydown', this.handleKeyDown.bind(this));
-        this.canvas.addEventListener('keyup', this.handleKeyUp.bind(this));
+        this.canvas = document.getElementById(this.configuration.selector);
         this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.canvas.addEventListener('mouseout', this.handleMouseOut.bind(this));
+        this.canvas.addEventListener('keydown', this.handleKeyDown.bind(this));
+        this.canvas.addEventListener('keyup', this.handleKeyUp.bind(this));
         this.canvas.oncontextmenu = function (e) {
             e.preventDefault();
         };
-        var self = this;
-        var resizing = function (e) {
-            var maxWidth = self.canvas.parentElement.offsetWidth - self.canvas.parentElement.offsetWidth * 0.05;
-            var maxHeigth = (self.configuration.heigth * self.configuration.frequencies) + (self.configuration.border * (self.configuration.frequencies + 1)) + self.configuration.margin * 2;
-            self.offsetX = 0;
-            self.offsetY = 0;
-            self.canvas.width = maxWidth;
-            self.canvas.height = maxHeigth;
-            self.draw();
-        };
-        window.addEventListener('resize', resizing.bind(this));
-        resizing(new Event('build'));
+        window.addEventListener('resize', this.handleResizing.bind(this));
+        this.handleResizing(new Event('build'));
     }
     Billy.prototype.map = function () {
         // That's how the matrix is turned into a array
@@ -88,6 +68,35 @@ var Billy = (function () {
         // Because we don't have a separation in the end
         this.widthMeasures = this.widthMeasures - this.configuration.separation;
         return this.blocks;
+    };
+    Billy.prototype.color = function (x, y) {
+        var context = this.canvas.getContext("2d");
+        var data = context.getImageData(x, y, 1, 1).data;
+        var rgb = ((data[0] << 16) | (data[1] << 8) | data[2]).toString(16);
+        var hexadecimal = "#" + ("000000" + rgb).slice(-6);
+        return hexadecimal;
+    };
+    Billy.prototype.direction = function (oldX, oldY, newX, newY) {
+        if (oldY < newY) {
+            // it's going up
+            return 1;
+        }
+        else if (oldX > newX) {
+            // through the right
+            return 2;
+        }
+        else if (oldY > newY) {
+            // now it's going down
+            return 3;
+        }
+        else if (oldX < newX) {
+            // and then left
+            return 4;
+        }
+        else {
+            // it stayed still
+            return 0;
+        }
     };
     Billy.prototype.draw = function () {
         var context = this.canvas.getContext("2d");
@@ -144,7 +153,7 @@ var Billy = (function () {
         this.draw();
     };
     Billy.prototype.behaviorClicking = function (e) {
-        if (!this.isClicking || !this.leftButtonClicked) {
+        if (!this.isClicking || !this.mouseLeftButtonClicked) {
             return;
         }
         var sorted = this.map().slice(0).sort(function (a, b) {
@@ -211,30 +220,43 @@ var Billy = (function () {
                     if (xofBlock - this.offsetX <= this.mouseX && this.mouseX < xofBlock + this.configuration.width) {
                         exit = true;
                         var context = this.canvas.getContext("2d");
-                        context.fillStyle = this.configuration.selectedColor;
-                        context.fillRect(xofBlock, yofBlock, this.configuration.width, this.configuration.heigth);
                         var index = this.blocks.map(function (block) {
                             return block.x.toString() + '-' + block.y;
                         }).indexOf(xofBlock.toString() + '-' + yofBlock.toString());
                         var block = this.blocks[index];
-                        block.selected = true;
+                        if (block.selected) {
+                            context.fillStyle = this.configuration.backgroundColor;
+                        }
+                        else {
+                            context.fillStyle = this.configuration.selectedColor;
+                        }
+                        block.selected = !block.selected;
+                        context.fillRect(xofBlock, yofBlock, this.configuration.width, this.configuration.heigth);
                         break;
                     }
                 }
             }
         }
     };
+    Billy.prototype.handleResizing = function (e) {
+        var maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * 0.05;
+        var maxHeigth = (this.configuration.heigth * this.configuration.frequencies) + (this.configuration.border * (this.configuration.frequencies + 1)) + this.configuration.margin * 2;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.canvas.width = maxWidth;
+        this.canvas.height = maxHeigth;
+        this.draw();
+    };
     Billy.prototype.handleKeyDown = function (e) {
         e.preventDefault();
         e.stopPropagation();
+        this.pressed.push(e.which);
     };
     Billy.prototype.handleKeyUp = function (e) {
         e.preventDefault();
         e.stopPropagation();
     };
     Billy.prototype.handleMouseDown = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
         var rect = this.canvas.getBoundingClientRect();
         var x = e.clientX - rect.left;
         var y = e.clientY - rect.top;
@@ -244,46 +266,53 @@ var Billy = (function () {
         this.isClicking = true;
         switch (e.which) {
             case 1:
-                this.leftButtonClicked = true;
-                this.rightButtonClicked = false;
-                this.middleButtonClicked = false;
+                this.mouseLeftButtonClicked = true;
+                this.mouseRightButtonClicked = false;
+                this.mouseMiddleButtonClicked = false;
+                this.behaviorClicking(e);
                 break;
             case 2:
-                this.leftButtonClicked = false;
-                this.rightButtonClicked = false;
-                this.middleButtonClicked = true;
+                this.mouseLeftButtonClicked = false;
+                this.mouseRightButtonClicked = false;
+                this.mouseMiddleButtonClicked = true;
                 break;
             case 3:
-                this.leftButtonClicked = false;
-                this.rightButtonClicked = true;
-                this.middleButtonClicked = false;
+                this.mouseLeftButtonClicked = false;
+                this.mouseRightButtonClicked = true;
+                this.mouseMiddleButtonClicked = false;
                 break;
             default:
-                this.leftButtonClicked = true;
-                this.rightButtonClicked = false;
-                this.middleButtonClicked = false;
+                this.mouseLeftButtonClicked = true;
+                this.mouseRightButtonClicked = false;
+                this.mouseMiddleButtonClicked = false;
                 break;
         }
     };
     Billy.prototype.handleMouseUp = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        this.behaviorClicking(e);
         this.isDragging = false;
         this.isClicking = false;
+        this.mouseLeftButtonClicked = false;
+        this.mouseMiddleButtonClicked = false;
+        this.mouseRightButtonClicked = false;
     };
     Billy.prototype.handleMouseMove = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        if (this.leftButtonClicked) {
+        if (this.mouseLeftButtonClicked) {
             var rect = this.canvas.getBoundingClientRect();
             var x = e.clientX - rect.left;
             var y = e.clientY - rect.top;
+            var oldColor = this.color(this.mouseX, this.mouseY);
             this.mouseX = x;
             this.mouseY = y;
-            this.behaviorClicking(e);
+            var newColor = this.color(this.mouseX, this.mouseY);
+            if (oldColor != newColor) {
+                this.behaviorClicking(e);
+            }
         }
-        else if (this.rightButtonClicked) {
+        else if (this.mouseRightButtonClicked) {
             this.behaviorDragging(e);
         }
         else {
@@ -292,8 +321,11 @@ var Billy = (function () {
     Billy.prototype.handleMouseOut = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        this.isClicking = false;
         this.isDragging = false;
+        this.isClicking = false;
+        this.mouseLeftButtonClicked = false;
+        this.mouseMiddleButtonClicked = false;
+        this.mouseRightButtonClicked = false;
     };
     return Billy;
 }());
@@ -308,7 +340,13 @@ var Block = (function () {
     return Block;
 }());
 var Configuration = (function () {
-    function Configuration(_frequencies, _margin, _width, _heigth, _border, _separation, _selectedColor, _backgroundColor, _sensibility, _shortcuts) {
+    function Configuration(_selector, _frequencies, _margin, _width, _heigth, _border, _separation, _selectedColor, _backgroundColor, _sensibility, _shortcuts) {
+        if (_selector == undefined) {
+            this.selector = "canvas";
+        }
+        else {
+            this.selector = _selector;
+        }
         if (_frequencies == undefined) {
             this.frequencies = 7;
         }
@@ -426,12 +464,6 @@ var Shortcuts = (function () {
         }
         else {
             this.pasteSelection = _pasteSelection;
-        }
-        if (_deleteSelection == undefined) {
-            this.deleteSelection = [23, 54, 33];
-        }
-        else {
-            this.deleteSelection = _deleteSelection;
         }
     }
     return Shortcuts;

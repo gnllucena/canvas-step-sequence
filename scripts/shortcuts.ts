@@ -5,7 +5,6 @@ class Shortcuts {
     moveSelectionDown: number[];
     copySelection: number[];
     pasteSelection: number[];
-    deleteSelection: number[];
 
     constructor(
         _moveSelectionUp: number[], 
@@ -57,13 +56,6 @@ class Shortcuts {
         } 
         else {
             this.pasteSelection = _pasteSelection; 
-        }
-
-        if (_deleteSelection == undefined) {
-            this.deleteSelection = [23, 54, 33];
-        } 
-        else {
-            this.deleteSelection = _deleteSelection; 
         }
     }
 }

@@ -1,15 +1,3 @@
-// playback:
-// linha vertical do play vai até 50% do canvas 
-// canvas começa a deslizar até o final
-// linha vertical do play vai até 100% do canvas
-
-// shortcuts:
-// shift + click: joga no array de seleções o quadrado selecionado
-// shift + drag: joga no array de seleções os quadrados selecionados
-// ctrl + c / v: copia e cola
-// ctrl + shift + seta: aumenta mais um na direção
-// ctrl + shift + alt + number: transforma o motif
-
 class Billy {
     canvas : HTMLCanvasElement;
     configuration : Configuration;
@@ -20,9 +8,9 @@ class Billy {
     isDragging: boolean = false;
     isClicking: boolean = false;
 
-    leftButtonClicked: boolean = false;
-    rightButtonClicked: boolean = false;
-    middleButtonClicked: boolean = false;
+    mouseLeftButtonClicked: boolean = false;
+    mouseRightButtonClicked: boolean = false;
+    mouseMiddleButtonClicked: boolean = false;
 
     offsetX: number = 0;
     offsetY: number = 0;
@@ -33,13 +21,13 @@ class Billy {
     heigthMeasures: number = 0;
 
     constructor(
-        _selector: string, 
         _configuration: Configuration, 
         _measures: Array<Measure>) 
     {
         this.measures = _measures;
 
         this.configuration = new Configuration(
+            _configuration.selector,
             _configuration.frequencies,
             _configuration.margin, 
             _configuration.width, 
@@ -55,39 +43,25 @@ class Billy {
             this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
         }
 
-        this.canvas = <HTMLCanvasElement> document.getElementById(_selector);
-            
-        this.canvas.addEventListener('keydown', this.handleKeyDown.bind(this));
-        this.canvas.addEventListener('keyup', this.handleKeyUp.bind(this));
+        this.canvas = <HTMLCanvasElement> document.getElementById(this.configuration.selector);
+        
         this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.canvas.addEventListener('mouseout', this.handleMouseOut.bind(this));
+        this.canvas.addEventListener('keydown', this.handleKeyDown.bind(this));
+        this.canvas.addEventListener('keyup', this.handleKeyUp.bind(this));
 
         this.canvas.oncontextmenu = function (e) {
             e.preventDefault();
         };
 
-        let self = this;
-        var resizing = function(e) {
-            let maxWidth = self.canvas.parentElement.offsetWidth - self.canvas.parentElement.offsetWidth * 0.05;
-            let maxHeigth = (self.configuration.heigth * self.configuration.frequencies) + (self.configuration.border * (self.configuration.frequencies + 1)) + self.configuration.margin * 2;
+        window.addEventListener('resize', this.handleResizing.bind(this));
 
-            self.offsetX = 0;
-            self.offsetY = 0;
-
-            self.canvas.width = maxWidth;
-            self.canvas.height = maxHeigth;
-
-            self.draw();
-        }
-
-        window.addEventListener('resize', resizing.bind(this));
-
-        resizing(new Event('build'));
+        this.handleResizing(new Event('build'));
     }
 
-    map() {
+    map(): Array<Block> {
         // That's how the matrix is turned into a array
         // ------------------------------ ---------------- --------
         // --  1  --  4  --  7  --  10 -- --  13 --  16 -- -- 19 --
@@ -143,7 +117,42 @@ class Billy {
         return this.blocks;
     }
 
-    draw() {
+    color(x, y): string {
+        let context = this.canvas.getContext("2d");
+
+        let data = context.getImageData(x, y, 1, 1).data;
+
+        let rgb = ((data[0] << 16) | (data[1] << 8) | data[2]).toString(16);
+
+        let hexadecimal = "#" + ("000000" + rgb).slice(-6);
+
+        return hexadecimal;
+    }
+
+    direction(oldX, oldY, newX, newY): number {
+        if (oldY < newY) {
+            // it's going up
+            return 1;
+        }
+        else if (oldX > newX) {
+            // through the right
+            return 2
+        }
+        else if (oldY > newY) {
+            // now it's going down
+            return 3;
+        }
+        else if (oldX < newX) {
+            // and then left
+            return 4;
+        }
+        else {
+            // it stayed still
+            return 0;
+        }
+    }
+
+    draw(): void {
         let context = this.canvas.getContext("2d");
 
         let canvasWidthAndWidth = this.canvas.width + this.configuration.width;
@@ -171,7 +180,7 @@ class Billy {
         }
     }
 
-    behaviorDragging(e) {
+    behaviorDragging(e): void {
         if (!this.isDragging) {
             return;
         }
@@ -211,8 +220,8 @@ class Billy {
         this.draw();
     }
 
-    behaviorClicking(e) {
-        if (!this.isClicking || !this.leftButtonClicked) {
+    behaviorClicking(e): void {
+        if (!this.isClicking || !this.mouseLeftButtonClicked) {
             return;
         }
 
@@ -297,15 +306,21 @@ class Billy {
                         
                         let context = this.canvas.getContext("2d");
 
-                        context.fillStyle = this.configuration.selectedColor;
-                        context.fillRect(xofBlock, yofBlock, this.configuration.width, this.configuration.heigth);
-                        
                         var index = this.blocks.map(function (block) {
                             return block.x.toString() + '-' + block.y;
                         }).indexOf(xofBlock.toString() + '-' + yofBlock.toString());
 
                         let block = this.blocks[index];
-                        block.selected = true;
+
+                        if (block.selected) {
+                            context.fillStyle = this.configuration.backgroundColor;
+                        } else {
+                            context.fillStyle = this.configuration.selectedColor;
+                        }
+                        
+                        block.selected = !block.selected;
+
+                        context.fillRect(xofBlock, yofBlock, this.configuration.width, this.configuration.heigth);
 
                         break;
                     }
@@ -313,21 +328,33 @@ class Billy {
             }
         }
     }
+
+    handleResizing(e): void {
+        let maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * 0.05;
+        let maxHeigth = (this.configuration.heigth * this.configuration.frequencies) + (this.configuration.border * (this.configuration.frequencies + 1)) + this.configuration.margin * 2;
+
+        this.offsetX = 0;
+        this.offsetY = 0;
+
+        this.canvas.width = maxWidth;
+        this.canvas.height = maxHeigth;
+
+        this.draw();
+    }
     
-    handleKeyDown(e) {
+    handleKeyDown(e): void {
+        e.preventDefault();
+        e.stopPropagation();
+
+        this.pressed.push(e.which)
+    }
+
+    handleKeyUp(e): void {
         e.preventDefault();
         e.stopPropagation();
     }
 
-    handleKeyUp(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    handleMouseDown(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
+    handleMouseDown(e): void {
         let rect = this.canvas.getBoundingClientRect();
 
         let x = e.clientX - rect.left;
@@ -340,64 +367,75 @@ class Billy {
 
         switch (e.which) {
             case 1:
-                this.leftButtonClicked = true;
-                this.rightButtonClicked = false;
-                this.middleButtonClicked = false;
+                this.mouseLeftButtonClicked = true;
+                this.mouseRightButtonClicked = false;
+                this.mouseMiddleButtonClicked = false;
+                this.behaviorClicking(e);
                 break;
             case 2:
-                this.leftButtonClicked = false;
-                this.rightButtonClicked = false;
-                this.middleButtonClicked = true;
+                this.mouseLeftButtonClicked = false;
+                this.mouseRightButtonClicked = false;
+                this.mouseMiddleButtonClicked = true;
                 break;
             case 3:
-                this.leftButtonClicked = false;
-                this.rightButtonClicked = true;
-                this.middleButtonClicked = false;
+                this.mouseLeftButtonClicked = false;
+                this.mouseRightButtonClicked = true;
+                this.mouseMiddleButtonClicked = false;
                 break;
             default: 
-                this.leftButtonClicked = true;
-                this.rightButtonClicked = false;
-                this.middleButtonClicked = false;
+                this.mouseLeftButtonClicked = true;
+                this.mouseRightButtonClicked = false;
+                this.mouseMiddleButtonClicked = false;
                 break;
         }
     }
 
-    handleMouseUp(e) {
+    handleMouseUp(e): void {
         e.preventDefault();
         e.stopPropagation();
-
-        this.behaviorClicking(e);
 
         this.isDragging = false;
         this.isClicking = false;
+        this.mouseLeftButtonClicked = false;
+        this.mouseMiddleButtonClicked = false;
+        this.mouseRightButtonClicked = false;
     }
 
-    handleMouseMove(e) {
+    handleMouseMove(e): void {
         e.preventDefault();
         e.stopPropagation();
 
-        if (this.leftButtonClicked) {
+        if (this.mouseLeftButtonClicked) {
             let rect = this.canvas.getBoundingClientRect();
             let x = e.clientX - rect.left;
             let y = e.clientY - rect.top;
 
+            let oldColor = this.color(this.mouseX, this.mouseY);
+            
             this.mouseX = x; 
             this.mouseY = y;
 
-            this.behaviorClicking(e);
+            let newColor = this.color(this.mouseX, this.mouseY);
+
+            if (oldColor != newColor) {
+                this.behaviorClicking(e);
+            }
         } 
-        else if (this.rightButtonClicked) {
+        else if (this.mouseRightButtonClicked) {
             this.behaviorDragging(e);
         }
         else {
         }
     }
 
-    handleMouseOut(e) {
+    handleMouseOut(e): void {
         e.preventDefault();
         e.stopPropagation();
         
-        this.isClicking = false;
         this.isDragging = false;
+        this.isClicking = false;
+        this.mouseLeftButtonClicked = false;
+        this.mouseMiddleButtonClicked = false;
+        this.mouseRightButtonClicked = false;
     }
 }
