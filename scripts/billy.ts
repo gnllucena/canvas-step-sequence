@@ -1,9 +1,15 @@
+//return
+// c3   - null  - d4    - null
+// null - d1    - d5    - d6
+
 class Billy {
-    canvas : HTMLCanvasElement;
-    configuration : Configuration;
-    measures : Array<Measure>;
+    canvas: HTMLCanvasElement;
+    canvasSelection: HTMLCanvasElement;
+
+    configuration: Configuration;
+    measures: Array<Measure> = new Array<Measure>();
     blocks: Array<Block> = new Array<Block>();
-    pressed: Array<number> = new Array<number>();
+    pressed: number[];
 
     isDragging: boolean = false;
     isClicking: boolean = false;
@@ -36,15 +42,18 @@ class Billy {
             _configuration.separation, 
             _configuration.selectedColor, 
             _configuration.backgroundColor,
-            _configuration.sensibility,
             _configuration.shortcuts);
 
         if (this.configuration.shortcuts == null) {
-            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
+            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null);
         }
 
         this.canvas = <HTMLCanvasElement> document.getElementById(this.configuration.selector);
         
+        document.getElementById(this.configuration.selector).innerHTML += "<canvas id='"+ this.configuration.selector + "-child'></canvas>";
+        
+        this.canvasSelection = <HTMLCanvasElement> document.getElementById(this.configuration.selector + "-child");
+
         this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
@@ -175,6 +184,7 @@ class Billy {
             } else {
                 context.fillStyle = this.configuration.backgroundColor;
             }
+            
 
             context.fillRect(block.x, block.y, block.width, block.height);
         }
@@ -193,9 +203,8 @@ class Billy {
         let newX = x - this.mouseX;
         let newY = x - this.mouseY;
 
-        this.offsetX += (newX - newX * this.configuration.sensibility) * -1;
-        this.offsetY = 0
-        // this.offsetY += (newY - newY * this.configuration.sensibility) * -1;
+        this.offsetX += newX * -1;
+        this.offsetY += 0;
 
         this.mouseX = x; 
         this.mouseY = y;
@@ -329,6 +338,10 @@ class Billy {
         }
     }
 
+    behaviorSelecting(e): void {
+        
+    }
+
     handleResizing(e): void {
         let maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * 0.05;
         let maxHeigth = (this.configuration.heigth * this.configuration.frequencies) + (this.configuration.border * (this.configuration.frequencies + 1)) + this.configuration.margin * 2;
@@ -339,19 +352,36 @@ class Billy {
         this.canvas.width = maxWidth;
         this.canvas.height = maxHeigth;
 
+        this.canvasSelection.width = maxWidth;
+        this.canvasSelection.height = maxHeigth;
+
         this.draw();
     }
     
     handleKeyDown(e): void {
         e.preventDefault();
         e.stopPropagation();
+        
+        let index = this.pressed.indexOf(e.which);
 
-        this.pressed.push(e.which)
+        if (index < 0) {
+            this.pressed.push(e.which);
+
+            this.pressed = this.pressed.sort(function (a, b) { 
+                return a - b; 
+            });
+        }
     }
 
     handleKeyUp(e): void {
         e.preventDefault();
         e.stopPropagation();
+        
+        let index = this.pressed.indexOf(e.which);
+
+        if (index > -1) {
+            this.pressed.splice(index);
+        }
     }
 
     handleMouseDown(e): void {
@@ -399,13 +429,23 @@ class Billy {
         this.mouseLeftButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
+
+        // we must remove any selection on child canvas
+        let index = this.pressed.indexOf(16);
+
+        if (index > -1) {
+            this.pressed.splice(index);
+        }
     }
 
     handleMouseMove(e): void {
         e.preventDefault();
         e.stopPropagation();
 
-        if (this.mouseLeftButtonClicked) {
+        if (this.isSelecting() && this.mouseLeftButtonClicked) {
+            this.behaviorSelecting(e);
+        }
+        else if (this.mouseLeftButtonClicked) {
             let rect = this.canvas.getBoundingClientRect();
             let x = e.clientX - rect.left;
             let y = e.clientY - rect.top;
@@ -437,5 +477,158 @@ class Billy {
         this.mouseLeftButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
+    }
+
+    isSelecting(): boolean {
+        let shortcuts: number[] = [16];
+
+        if (shortcuts.length != this.pressed.length) {
+            return false;
+        }
+
+        let is = true;
+        for (let i = 0; i <= shortcuts.length - 1; i++) {
+            if (shortcuts[i] == this.pressed[i]) { 
+                is = false;
+            }
+        }
+
+        return is;
+    }
+
+    isShortcutMovingUp(): boolean {
+        let shortcuts: number[] = [38];
+
+        if (shortcuts.length != this.pressed.length) {
+            return false;
+        }
+
+        let is = true;
+        for (let i = 0; i <= shortcuts.length - 1; i++) {
+            if (shortcuts[i] == this.pressed[i]) { 
+                is = false;
+            }
+        }
+
+        return is;
+    }
+
+    isShortcutMovingRight(): boolean {
+        let shortcuts: number[] = [39];
+
+        if (shortcuts.length != this.pressed.length) {
+            return false;
+        }
+
+        let is = true;
+        for (let i = 0; i <= shortcuts.length - 1; i++) {
+            if (shortcuts[i] == this.pressed[i]) { 
+                is = false;
+            }
+        }
+
+        return is;
+    }
+    
+    isShortcutMovingDown(): boolean {
+        let shortcuts: number[] = [40];
+
+        if (shortcuts.length != this.pressed.length) {
+            return false;
+        }
+
+        let is = true;
+        for (let i = 0; i <= shortcuts.length - 1; i++) {
+            if (shortcuts[i] == this.pressed[i]) { 
+                is = false;
+            }
+        }
+
+        return is;
+    }
+
+    isShortcutMovingLeft(): boolean {
+        let shortcuts: number[] = [37];
+
+        if (shortcuts.length != this.pressed.length) {
+            return false;
+        }
+
+        let is = true;
+        for (let i = 0; i <= shortcuts.length - 1; i++) {
+            if (shortcuts[i] == this.pressed[i]) { 
+                is = false;
+            }
+        }
+
+        return is;
+    }
+
+    isShortcutPastingUp(): boolean {
+        let shortcuts: number[] = [16, 17, 38];
+
+        if (shortcuts.length != this.pressed.length) {
+            return false;
+        }
+
+        let is = true;
+        for (let i = 0; i <= shortcuts.length - 1; i++) {
+            if (shortcuts[i] == this.pressed[i]) { 
+                is = false;
+            }
+        }
+
+        return is;
+    }
+
+    isShortcutPastingRight(): boolean {
+        let shortcuts: number[] = [16, 17, 39];
+
+        if (shortcuts.length != this.pressed.length) {
+            return false;
+        }
+
+        let is = true;
+        for (let i = 0; i <= shortcuts.length - 1; i++) {
+            if (shortcuts[i] == this.pressed[i]) { 
+                is = false;
+            }
+        }
+
+        return is;
+    }
+
+    isShortcutPastingDown(): boolean {
+        let shortcuts: number[] = [16, 17, 40];
+
+        if (shortcuts.length != this.pressed.length) {
+            return false;
+        }
+
+        let is = true;
+        for (let i = 0; i <= shortcuts.length - 1; i++) {
+            if (shortcuts[i] == this.pressed[i]) { 
+                is = false;
+            }
+        }
+
+        return is;
+    }
+
+    isShortcutPastingLeft(): boolean {
+        let shortcuts: number[] = [16, 17, 37];
+
+        if (shortcuts.length != this.pressed.length) {
+            return false;
+        }
+
+        let is = true;
+        for (let i = 0; i <= shortcuts.length - 1; i++) {
+            if (shortcuts[i] == this.pressed[i]) { 
+                is = false;
+            }
+        }
+
+        return is;
     }
 }

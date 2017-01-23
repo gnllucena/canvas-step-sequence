@@ -1,9 +1,13 @@
+//return
+// c3   - null  - d4    - null
+// null - d1    - d5    - d6
 var Billy = (function () {
     function Billy(_configuration, _measures) {
         this.blocks = new Array();
         this.pressed = new Array();
         this.isDragging = false;
         this.isClicking = false;
+        this.isSelecting = false;
         this.mouseLeftButtonClicked = false;
         this.mouseRightButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
@@ -12,11 +16,13 @@ var Billy = (function () {
         this.widthMeasures = 0;
         this.heigthMeasures = 0;
         this.measures = _measures;
-        this.configuration = new Configuration(_configuration.selector, _configuration.frequencies, _configuration.margin, _configuration.width, _configuration.heigth, _configuration.border, _configuration.separation, _configuration.selectedColor, _configuration.backgroundColor, _configuration.sensibility, _configuration.shortcuts);
+        this.configuration = new Configuration(_configuration.selector, _configuration.frequencies, _configuration.margin, _configuration.width, _configuration.heigth, _configuration.border, _configuration.separation, _configuration.selectedColor, _configuration.backgroundColor, _configuration.shortcuts);
         if (this.configuration.shortcuts == null) {
-            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
+            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null);
         }
         this.canvas = document.getElementById(this.configuration.selector);
+        document.getElementById(this.configuration.selector).innerHTML += "<canvas id='" + this.configuration.selector + "-child'></canvas>";
+        this.canvasSelection = document.getElementById(this.configuration.selector + "-child");
         this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
@@ -130,9 +136,8 @@ var Billy = (function () {
         var y = e.clientY - rect.top;
         var newX = x - this.mouseX;
         var newY = x - this.mouseY;
-        this.offsetX += (newX - newX * this.configuration.sensibility) * -1;
-        this.offsetY = 0;
-        // this.offsetY += (newY - newY * this.configuration.sensibility) * -1;
+        this.offsetX += newX * -1;
+        this.offsetY += 0;
         this.mouseX = x;
         this.mouseY = y;
         if (this.widthMeasures < this.canvas.width) {
@@ -245,16 +250,25 @@ var Billy = (function () {
         this.offsetY = 0;
         this.canvas.width = maxWidth;
         this.canvas.height = maxHeigth;
+        this.canvasSelection.width = maxWidth;
+        this.canvasSelection.height = maxHeigth;
         this.draw();
     };
     Billy.prototype.handleKeyDown = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        this.pressed.push(e.which);
+        var index = this.pressed.indexOf(e.which);
+        if (index < 0) {
+            this.pressed.push(e.which);
+        }
     };
     Billy.prototype.handleKeyUp = function (e) {
         e.preventDefault();
         e.stopPropagation();
+        var index = this.pressed.indexOf(e.which);
+        if (index > -1) {
+            this.pressed.splice(index);
+        }
     };
     Billy.prototype.handleMouseDown = function (e) {
         var rect = this.canvas.getBoundingClientRect();
@@ -264,6 +278,7 @@ var Billy = (function () {
         this.mouseY = y;
         this.isDragging = true;
         this.isClicking = true;
+        this.isSelecting = false;
         switch (e.which) {
             case 1:
                 this.mouseLeftButtonClicked = true;
@@ -327,6 +342,30 @@ var Billy = (function () {
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
     };
+    Billy.prototype.isShortcutMovingUp = function () {
+        return false;
+    };
+    Billy.prototype.isShortcutMovingRight = function () {
+        return false;
+    };
+    Billy.prototype.isShortcutMovingDown = function () {
+        return false;
+    };
+    Billy.prototype.isShortcutMovingLeft = function () {
+        return false;
+    };
+    Billy.prototype.isShortcutPastingUp = function () {
+        return false;
+    };
+    Billy.prototype.isShortcutPastingRight = function () {
+        return false;
+    };
+    Billy.prototype.isShortcutPastingDown = function () {
+        return false;
+    };
+    Billy.prototype.isShortcutPastingLeft = function () {
+        return false;
+    };
     return Billy;
 }());
 var Block = (function () {
@@ -340,7 +379,7 @@ var Block = (function () {
     return Block;
 }());
 var Configuration = (function () {
-    function Configuration(_selector, _frequencies, _margin, _width, _heigth, _border, _separation, _selectedColor, _backgroundColor, _sensibility, _shortcuts) {
+    function Configuration(_selector, _frequencies, _margin, _width, _heigth, _border, _separation, _selectedColor, _backgroundColor, _shortcuts) {
         if (_selector == undefined) {
             this.selector = "canvas";
         }
@@ -395,17 +434,11 @@ var Configuration = (function () {
         else {
             this.backgroundColor = _backgroundColor;
         }
-        if (_sensibility == undefined) {
-            this.sensibility = 0.4;
-        }
-        else {
-            this.sensibility = _sensibility;
-        }
         if (_shortcuts == undefined) {
-            this.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
+            this.shortcuts = new Shortcuts(null, null, null, null, null, null);
         }
         else {
-            this.shortcuts = new Shortcuts(_shortcuts.moveSelectionUp, _shortcuts.moveSelectionLeft, _shortcuts.moveSelectionRight, _shortcuts.moveSelectionDown, _shortcuts.copySelection, _shortcuts.pasteSelection, _shortcuts.deleteSelection);
+            this.shortcuts = new Shortcuts(_shortcuts.moveSelectionUp, _shortcuts.moveSelectionLeft, _shortcuts.moveSelectionRight, _shortcuts.moveSelectionDown, _shortcuts.copySelection, _shortcuts.pasteSelection);
         }
     }
     return Configuration;
@@ -428,7 +461,7 @@ var Measure = (function () {
     return Measure;
 }());
 var Shortcuts = (function () {
-    function Shortcuts(_moveSelectionUp, _moveSelectionLeft, _moveSelectionRight, _moveSelectionDown, _copySelection, _pasteSelection, _deleteSelection) {
+    function Shortcuts(_moveSelectionUp, _moveSelectionLeft, _moveSelectionRight, _moveSelectionDown, _copySelection, _pasteSelection) {
         if (_moveSelectionUp == undefined) {
             this.moveSelectionUp = [23, 54, 33];
         }

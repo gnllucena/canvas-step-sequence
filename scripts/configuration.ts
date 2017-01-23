@@ -7,7 +7,6 @@ class Configuration {
     border: number;
     separation: number;
     selectedColor: string;
-    sensibility: number;
     backgroundColor: string;
     shortcuts: Shortcuts;
 
@@ -21,7 +20,6 @@ class Configuration {
         _separation: number,
         _selectedColor: string,
         _backgroundColor: string,
-        _sensibility: number,
         _shortcuts: Shortcuts) 
     {
         if (_selector == undefined) {
@@ -86,15 +84,8 @@ class Configuration {
             this.backgroundColor = _backgroundColor;
         }
 
-        if (_sensibility == undefined) {
-            this.sensibility = 0.4;
-        } 
-        else {
-            this.sensibility = _sensibility;
-        }
-
         if (_shortcuts == undefined) {
-            this.shortcuts = new Shortcuts(null, null, null, null, null, null, null);
+            this.shortcuts = new Shortcuts(null, null, null, null, null, null);
         } 
         else {
             this.shortcuts = new Shortcuts(
@@ -103,9 +94,7 @@ class Configuration {
                 _shortcuts.moveSelectionRight,
                 _shortcuts.moveSelectionDown,
                 _shortcuts.copySelection,
-                _shortcuts.pasteSelection,
-                _shortcuts.deleteSelection);
+                _shortcuts.pasteSelection);
         }
-        
     }
 }

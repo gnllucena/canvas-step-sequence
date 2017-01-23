@@ -12,8 +12,7 @@ class Shortcuts {
         _moveSelectionRight: number[],
         _moveSelectionDown: number[],
         _copySelection: number[],
-        _pasteSelection: number[],
-        _deleteSelection: number[]) 
+        _pasteSelection: number[]) 
     {
         if (_moveSelectionUp == undefined) {
             this.moveSelectionUp = [23, 54, 33];
