@@ -1,60 +1,86 @@
 class Shortcuts {
-    moveSelectionUp: number[];
-    moveSelectionLeft: number[];
-    moveSelectionRight: number[];
-    moveSelectionDown: number[];
-    copySelection: number[];
-    pasteSelection: number[];
+    selecting: number[];
+    movingSelectionUp: number[];
+    movingSelectionRight: number[];
+    movingSelectionDown: number[];
+    movingSelectionLeft: number[];
+    pastingSelectionUp: number[];
+    pastingSelectionRight: number[];
+    pastingSelectionDown: number[];
+    pastingSelectionLeft: number[]
 
     constructor(
-        _moveSelectionUp: number[], 
-        _moveSelectionLeft: number[],
-        _moveSelectionRight: number[],
-        _moveSelectionDown: number[],
-        _copySelection: number[],
-        _pasteSelection: number[]) 
-    {
-        if (_moveSelectionUp == undefined) {
-            this.moveSelectionUp = [23, 54, 33];
+        _selecting: number[],
+        _movingSelectionUp: number[],
+        _movingSelectionRight: number[],
+        _movingSelectionDown: number[],
+        _movingSelectionLeft: number[],
+        _pastingSelectionUp: number[],
+        _pastingSelectionRight: number[],
+        _pastingSelectionDown: number[],
+        _pastingSelectionLeft: number[]
+    ) {
+        if (_selecting == undefined) {
+            this.selecting = [16];
         } 
         else { 
-            this.moveSelectionUp = _moveSelectionUp; 
+            this.selecting = _selecting; 
         }
 
-        if (_moveSelectionLeft == undefined) {
-            this.moveSelectionLeft = [23, 54, 33];
+        if (_movingSelectionUp == undefined) {
+            this.movingSelectionUp = [38];
         } 
         else { 
-            this.moveSelectionLeft = _moveSelectionLeft; 
+            this.movingSelectionUp = _movingSelectionUp; 
         }
 
-        if (_moveSelectionRight == undefined) {
-            this.moveSelectionRight = [23, 54, 33];
+        if (_movingSelectionRight == undefined) {
+            this.movingSelectionRight = [39];
         } 
         else { 
-            this.moveSelectionRight = _moveSelectionRight; 
+            this.movingSelectionRight = _movingSelectionRight; 
         }
 
-        if (_moveSelectionDown == undefined) {
-            this.moveSelectionDown = [23, 54, 33];
+        if (_movingSelectionDown == undefined) {
+            this.movingSelectionDown = [40];
         } 
         else {
-            this.moveSelectionDown = _moveSelectionDown; 
+            this.movingSelectionDown = _movingSelectionDown; 
         }
 
-        if (_copySelection == undefined) {
-            this.copySelection = [23, 54, 33];
+        if (_movingSelectionLeft == undefined) {
+            this.movingSelectionLeft = [37];
         } 
         else {
-            this.copySelection = _copySelection; 
+            this.movingSelectionLeft = _movingSelectionLeft; 
         }
 
-        if (_pasteSelection == undefined) 
-        {
-            this.pasteSelection = [23, 54, 33];
+        if (_pastingSelectionUp == undefined) {
+            this.pastingSelectionUp = [16, 17, 38];
+        } 
+        else { 
+            this.pastingSelectionUp = _pastingSelectionUp; 
+        }
+
+        if (_pastingSelectionRight == undefined) {
+            this.pastingSelectionRight = [16, 17, 39];
+        } 
+        else { 
+            this.pastingSelectionRight = _pastingSelectionRight; 
+        }
+
+        if (_pastingSelectionDown == undefined) {
+            this.pastingSelectionDown = [16, 17, 40];
         } 
         else {
-            this.pasteSelection = _pasteSelection; 
+            this.pastingSelectionDown = _pastingSelectionDown; 
+        }
+
+        if (_pastingSelectionLeft == undefined) {
+            this.pastingSelectionLeft = [16, 17, 37];
+        } 
+        else {
+            this.pastingSelectionLeft = _pastingSelectionLeft; 
         }
     }
 }

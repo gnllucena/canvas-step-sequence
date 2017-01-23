@@ -45,7 +45,7 @@ class Billy {
             _configuration.shortcuts);
 
         if (this.configuration.shortcuts == null) {
-            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null);
+            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null);
         }
 
         this.canvas = <HTMLCanvasElement> document.getElementById(this.configuration.selector);
@@ -133,9 +133,9 @@ class Billy {
 
         let rgb = ((data[0] << 16) | (data[1] << 8) | data[2]).toString(16);
 
-        let hexadecimal = "#" + ("000000" + rgb).slice(-6);
+        let hexa = "#" + ("000000" + rgb).slice(-6);
 
-        return hexadecimal;
+        return hexa;
     }
 
     direction(oldX, oldY, newX, newY): number {
@@ -480,155 +480,128 @@ class Billy {
     }
 
     isSelecting(): boolean {
-        let shortcuts: number[] = [16];
-
-        if (shortcuts.length != this.pressed.length) {
+        if (this.configuration.shortcuts.selecting.length != this.pressed.length) {
             return false;
         }
 
-        let is = true;
-        for (let i = 0; i <= shortcuts.length - 1; i++) {
-            if (shortcuts[i] == this.pressed[i]) { 
-                is = false;
+        for (let i = 0; i <= this.configuration.shortcuts.selecting.length - 1; i++) {
+            if (this.configuration.shortcuts.selecting[i] != this.pressed[i]) { 
+                return false
             }
         }
 
-        return is;
+        return true;
     }
 
     isShortcutMovingUp(): boolean {
-        let shortcuts: number[] = [38];
-
-        if (shortcuts.length != this.pressed.length) {
+        if (this.configuration.shortcuts.movingSelectionUp.length != this.pressed.length) {
             return false;
         }
 
-        let is = true;
-        for (let i = 0; i <= shortcuts.length - 1; i++) {
-            if (shortcuts[i] == this.pressed[i]) { 
-                is = false;
+        for (let i = 0; i <= this.configuration.shortcuts.movingSelectionUp.length - 1; i++) {
+            if (this.configuration.shortcuts.movingSelectionUp[i] != this.pressed[i]) { 
+                return false;
             }
         }
 
-        return is;
+        return true;
     }
 
     isShortcutMovingRight(): boolean {
-        let shortcuts: number[] = [39];
-
-        if (shortcuts.length != this.pressed.length) {
+        if (this.configuration.shortcuts.movingSelectionRight.length != this.pressed.length) {
             return false;
         }
 
-        let is = true;
-        for (let i = 0; i <= shortcuts.length - 1; i++) {
-            if (shortcuts[i] == this.pressed[i]) { 
-                is = false;
+        for (let i = 0; i <= this.configuration.shortcuts.movingSelectionRight.length - 1; i++) {
+            if (this.configuration.shortcuts.movingSelectionRight[i] != this.pressed[i]) { 
+                return false;
             }
         }
 
-        return is;
+        return true;
     }
     
     isShortcutMovingDown(): boolean {
-        let shortcuts: number[] = [40];
-
-        if (shortcuts.length != this.pressed.length) {
+        if (this.configuration.shortcuts.movingSelectionDown.length != this.pressed.length) {
             return false;
         }
 
-        let is = true;
-        for (let i = 0; i <= shortcuts.length - 1; i++) {
-            if (shortcuts[i] == this.pressed[i]) { 
-                is = false;
+        for (let i = 0; i <= this.configuration.shortcuts.movingSelectionDown.length - 1; i++) {
+            if (this.configuration.shortcuts.movingSelectionDown[i] != this.pressed[i]) { 
+                return false;
             }
         }
 
-        return is;
+        return true;
     }
 
     isShortcutMovingLeft(): boolean {
-        let shortcuts: number[] = [37];
-
-        if (shortcuts.length != this.pressed.length) {
+        if (this.configuration.shortcuts.movingSelectionLeft.length != this.pressed.length) {
             return false;
         }
 
-        let is = true;
-        for (let i = 0; i <= shortcuts.length - 1; i++) {
-            if (shortcuts[i] == this.pressed[i]) { 
-                is = false;
+        for (let i = 0; i <= this.configuration.shortcuts.movingSelectionLeft.length - 1; i++) {
+            if (this.configuration.shortcuts.movingSelectionLeft[i] != this.pressed[i]) { 
+                return false;
             }
         }
 
-        return is;
+        return true;
     }
 
     isShortcutPastingUp(): boolean {
-        let shortcuts: number[] = [16, 17, 38];
-
-        if (shortcuts.length != this.pressed.length) {
+        if (this.configuration.shortcuts.pastingSelectionUp.length != this.pressed.length) {
             return false;
         }
 
-        let is = true;
-        for (let i = 0; i <= shortcuts.length - 1; i++) {
-            if (shortcuts[i] == this.pressed[i]) { 
-                is = false;
+        for (let i = 0; i <= this.configuration.shortcuts.pastingSelectionUp.length - 1; i++) {
+            if (this.configuration.shortcuts.pastingSelectionUp[i] != this.pressed[i]) { 
+                return false;
             }
         }
 
-        return is;
+        return true;
     }
 
     isShortcutPastingRight(): boolean {
-        let shortcuts: number[] = [16, 17, 39];
-
-        if (shortcuts.length != this.pressed.length) {
+        if (this.configuration.shortcuts.pastingSelectionRight.length != this.pressed.length) {
             return false;
         }
 
-        let is = true;
-        for (let i = 0; i <= shortcuts.length - 1; i++) {
-            if (shortcuts[i] == this.pressed[i]) { 
-                is = false;
+        for (let i = 0; i <= this.configuration.shortcuts.pastingSelectionRight.length - 1; i++) {
+            if (this.configuration.shortcuts.pastingSelectionRight[i] != this.pressed[i]) { 
+                return false;
             }
         }
 
-        return is;
+        return true;
     }
 
     isShortcutPastingDown(): boolean {
-        let shortcuts: number[] = [16, 17, 40];
-
-        if (shortcuts.length != this.pressed.length) {
+        if (this.configuration.shortcuts.pastingSelectionDown.length != this.pressed.length) {
             return false;
         }
 
-        let is = true;
-        for (let i = 0; i <= shortcuts.length - 1; i++) {
-            if (shortcuts[i] == this.pressed[i]) { 
-                is = false;
+        for (let i = 0; i <= this.configuration.shortcuts.pastingSelectionDown.length - 1; i++) {
+            if (this.configuration.shortcuts.pastingSelectionDown[i] == this.pressed[i]) { 
+                return false;
             }
         }
 
-        return is;
+        return true;
     }
 
     isShortcutPastingLeft(): boolean {
-        let shortcuts: number[] = [16, 17, 37];
-
-        if (shortcuts.length != this.pressed.length) {
+        if (this.configuration.shortcuts.pastingSelectionLeft.length != this.pressed.length) {
             return false;
         }
 
-        let is = true;
-        for (let i = 0; i <= shortcuts.length - 1; i++) {
-            if (shortcuts[i] == this.pressed[i]) { 
-                is = false;
+        for (let i = 0; i <= this.configuration.shortcuts.pastingSelectionLeft.length - 1; i++) {
+            if (this.configuration.shortcuts.pastingSelectionLeft[i] == this.pressed[i]) { 
+                return false;
             }
         }
 
-        return is;
+        return true;
     }
 }

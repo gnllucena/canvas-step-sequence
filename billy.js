@@ -3,11 +3,10 @@
 // null - d1    - d5    - d6
 var Billy = (function () {
     function Billy(_configuration, _measures) {
+        this.measures = new Array();
         this.blocks = new Array();
-        this.pressed = new Array();
         this.isDragging = false;
         this.isClicking = false;
-        this.isSelecting = false;
         this.mouseLeftButtonClicked = false;
         this.mouseRightButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
@@ -18,7 +17,7 @@ var Billy = (function () {
         this.measures = _measures;
         this.configuration = new Configuration(_configuration.selector, _configuration.frequencies, _configuration.margin, _configuration.width, _configuration.heigth, _configuration.border, _configuration.separation, _configuration.selectedColor, _configuration.backgroundColor, _configuration.shortcuts);
         if (this.configuration.shortcuts == null) {
-            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null);
+            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null);
         }
         this.canvas = document.getElementById(this.configuration.selector);
         document.getElementById(this.configuration.selector).innerHTML += "<canvas id='" + this.configuration.selector + "-child'></canvas>";
@@ -79,8 +78,8 @@ var Billy = (function () {
         var context = this.canvas.getContext("2d");
         var data = context.getImageData(x, y, 1, 1).data;
         var rgb = ((data[0] << 16) | (data[1] << 8) | data[2]).toString(16);
-        var hexadecimal = "#" + ("000000" + rgb).slice(-6);
-        return hexadecimal;
+        var hexa = "#" + ("000000" + rgb).slice(-6);
+        return hexa;
     };
     Billy.prototype.direction = function (oldX, oldY, newX, newY) {
         if (oldY < newY) {
@@ -243,6 +242,8 @@ var Billy = (function () {
             }
         }
     };
+    Billy.prototype.behaviorSelecting = function (e) {
+    };
     Billy.prototype.handleResizing = function (e) {
         var maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * 0.05;
         var maxHeigth = (this.configuration.heigth * this.configuration.frequencies) + (this.configuration.border * (this.configuration.frequencies + 1)) + this.configuration.margin * 2;
@@ -260,6 +261,9 @@ var Billy = (function () {
         var index = this.pressed.indexOf(e.which);
         if (index < 0) {
             this.pressed.push(e.which);
+            this.pressed = this.pressed.sort(function (a, b) {
+                return a - b;
+            });
         }
     };
     Billy.prototype.handleKeyUp = function (e) {
@@ -278,7 +282,6 @@ var Billy = (function () {
         this.mouseY = y;
         this.isDragging = true;
         this.isClicking = true;
-        this.isSelecting = false;
         switch (e.which) {
             case 1:
                 this.mouseLeftButtonClicked = true;
@@ -311,11 +314,19 @@ var Billy = (function () {
         this.mouseLeftButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
+        // we must remove any selection on child canvas
+        var index = this.pressed.indexOf(16);
+        if (index > -1) {
+            this.pressed.splice(index);
+        }
     };
     Billy.prototype.handleMouseMove = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        if (this.mouseLeftButtonClicked) {
+        if (this.isSelecting() && this.mouseLeftButtonClicked) {
+            this.behaviorSelecting(e);
+        }
+        else if (this.mouseLeftButtonClicked) {
             var rect = this.canvas.getBoundingClientRect();
             var x = e.clientX - rect.left;
             var y = e.clientY - rect.top;
@@ -342,29 +353,113 @@ var Billy = (function () {
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
     };
+    Billy.prototype.isSelecting = function () {
+        if (this.configuration.shortcuts.selecting.length != this.pressed.length) {
+            return false;
+        }
+        var is = true;
+        for (var i = 0; i <= this.configuration.shortcuts.selecting.length - 1; i++) {
+            if (this.configuration.shortcuts.selecting[i] == this.pressed[i]) {
+                is = false;
+            }
+        }
+        return is;
+    };
     Billy.prototype.isShortcutMovingUp = function () {
-        return false;
+        if (this.configuration.shortcuts.movingSelectionUp.length != this.pressed.length) {
+            return false;
+        }
+        var is = true;
+        for (var i = 0; i <= this.configuration.shortcuts.movingSelectionUp.length - 1; i++) {
+            if (this.configuration.shortcuts.movingSelectionUp[i] == this.pressed[i]) {
+                is = false;
+            }
+        }
+        return is;
     };
     Billy.prototype.isShortcutMovingRight = function () {
-        return false;
+        if (this.configuration.shortcuts.movingSelectionRight.length != this.pressed.length) {
+            return false;
+        }
+        var is = true;
+        for (var i = 0; i <= this.configuration.shortcuts.movingSelectionRight.length - 1; i++) {
+            if (this.configuration.shortcuts.movingSelectionRight[i] == this.pressed[i]) {
+                is = false;
+            }
+        }
+        return is;
     };
     Billy.prototype.isShortcutMovingDown = function () {
-        return false;
+        if (this.configuration.shortcuts.movingSelectionDown.length != this.pressed.length) {
+            return false;
+        }
+        var is = true;
+        for (var i = 0; i <= this.configuration.shortcuts.movingSelectionDown.length - 1; i++) {
+            if (this.configuration.shortcuts.movingSelectionDown[i] == this.pressed[i]) {
+                is = false;
+            }
+        }
+        return is;
     };
     Billy.prototype.isShortcutMovingLeft = function () {
-        return false;
+        if (this.configuration.shortcuts.movingSelectionLeft.length != this.pressed.length) {
+            return false;
+        }
+        var is = true;
+        for (var i = 0; i <= this.configuration.shortcuts.movingSelectionLeft.length - 1; i++) {
+            if (this.configuration.shortcuts.movingSelectionLeft[i] == this.pressed[i]) {
+                is = false;
+            }
+        }
+        return is;
     };
     Billy.prototype.isShortcutPastingUp = function () {
-        return false;
+        if (this.configuration.shortcuts.pastingSelectionUp.length != this.pressed.length) {
+            return false;
+        }
+        var is = true;
+        for (var i = 0; i <= this.configuration.shortcuts.pastingSelectionUp.length - 1; i++) {
+            if (this.configuration.shortcuts.pastingSelectionUp[i] == this.pressed[i]) {
+                is = false;
+            }
+        }
+        return is;
     };
     Billy.prototype.isShortcutPastingRight = function () {
-        return false;
+        if (this.configuration.shortcuts.pastingSelectionRight.length != this.pressed.length) {
+            return false;
+        }
+        var is = true;
+        for (var i = 0; i <= this.configuration.shortcuts.pastingSelectionRight.length - 1; i++) {
+            if (this.configuration.shortcuts.pastingSelectionRight[i] == this.pressed[i]) {
+                is = false;
+            }
+        }
+        return is;
     };
     Billy.prototype.isShortcutPastingDown = function () {
-        return false;
+        if (this.configuration.shortcuts.pastingSelectionDown.length != this.pressed.length) {
+            return false;
+        }
+        var is = true;
+        for (var i = 0; i <= this.configuration.shortcuts.pastingSelectionDown.length - 1; i++) {
+            if (this.configuration.shortcuts.pastingSelectionDown[i] == this.pressed[i]) {
+                is = false;
+            }
+        }
+        return is;
     };
     Billy.prototype.isShortcutPastingLeft = function () {
-        return false;
+        if (this.configuration.shortcuts.pastingSelectionLeft.length != this.pressed.length) {
+            return false;
+        }
+        var is = true;
+        for (var i = 0; i <= this.configuration.shortcuts.pastingSelectionLeft.length - 1; i++) {
+            if (this.configuration.shortcuts.pastingSelectionLeft[i] == this.pressed[i]) {
+                is = false;
+            }
+        }
+        return is;
     };
     return Billy;
 }());
@@ -461,42 +556,60 @@ var Measure = (function () {
     return Measure;
 }());
 var Shortcuts = (function () {
-    function Shortcuts(_moveSelectionUp, _moveSelectionLeft, _moveSelectionRight, _moveSelectionDown, _copySelection, _pasteSelection) {
-        if (_moveSelectionUp == undefined) {
-            this.moveSelectionUp = [23, 54, 33];
+    function Shortcuts(_selecting, _movingSelectionUp, _movingSelectionRight, _movingSelectionDown, _movingSelectionLeft, _pastingSelectionUp, _pastingSelectionRight, _pastingSelectionDown, _pastingSelectionLeft) {
+        if (_selecting == undefined) {
+            this.selecting = [16];
         }
         else {
-            this.moveSelectionUp = _moveSelectionUp;
+            this.selecting = _selecting;
         }
-        if (_moveSelectionLeft == undefined) {
-            this.moveSelectionLeft = [23, 54, 33];
-        }
-        else {
-            this.moveSelectionLeft = _moveSelectionLeft;
-        }
-        if (_moveSelectionRight == undefined) {
-            this.moveSelectionRight = [23, 54, 33];
+        if (_movingSelectionUp == undefined) {
+            this.movingSelectionUp = [38];
         }
         else {
-            this.moveSelectionRight = _moveSelectionRight;
+            this.movingSelectionUp = _movingSelectionUp;
         }
-        if (_moveSelectionDown == undefined) {
-            this.moveSelectionDown = [23, 54, 33];
-        }
-        else {
-            this.moveSelectionDown = _moveSelectionDown;
-        }
-        if (_copySelection == undefined) {
-            this.copySelection = [23, 54, 33];
+        if (_movingSelectionRight == undefined) {
+            this.movingSelectionRight = [39];
         }
         else {
-            this.copySelection = _copySelection;
+            this.movingSelectionRight = _movingSelectionRight;
         }
-        if (_pasteSelection == undefined) {
-            this.pasteSelection = [23, 54, 33];
+        if (_movingSelectionDown == undefined) {
+            this.movingSelectionDown = [40];
         }
         else {
-            this.pasteSelection = _pasteSelection;
+            this.movingSelectionDown = _movingSelectionDown;
+        }
+        if (_movingSelectionLeft == undefined) {
+            this.movingSelectionLeft = [37];
+        }
+        else {
+            this.movingSelectionLeft = _movingSelectionLeft;
+        }
+        if (_pastingSelectionUp == undefined) {
+            this.pastingSelectionUp = [16, 17, 38];
+        }
+        else {
+            this.pastingSelectionUp = _pastingSelectionUp;
+        }
+        if (_pastingSelectionRight == undefined) {
+            this.pastingSelectionRight = [16, 17, 39];
+        }
+        else {
+            this.pastingSelectionRight = _pastingSelectionRight;
+        }
+        if (_pastingSelectionDown == undefined) {
+            this.pastingSelectionDown = [16, 17, 40];
+        }
+        else {
+            this.pastingSelectionDown = _pastingSelectionDown;
+        }
+        if (_pastingSelectionLeft == undefined) {
+            this.pastingSelectionLeft = [16, 17, 37];
+        }
+        else {
+            this.pastingSelectionLeft = _pastingSelectionLeft;
         }
     }
     return Shortcuts;

@@ -20,8 +20,8 @@ class Configuration {
         _separation: number,
         _selectedColor: string,
         _backgroundColor: string,
-        _shortcuts: Shortcuts) 
-    {
+        _shortcuts: Shortcuts
+    ) {
         if (_selector == undefined) {
             this.selector = "canvas";
         }

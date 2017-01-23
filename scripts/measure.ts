@@ -4,8 +4,8 @@ class Measure {
 
     constructor(
         _pulses: number, 
-        _rhythm: number) 
-    { 
+        _rhythm: number
+    ) { 
         if (_pulses == undefined) {
             this.pulses = 4;
         } 
