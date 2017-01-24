@@ -6,6 +6,7 @@ class Configuration {
     heigth: number;
     border: number;
     separation: number;
+    printedColor: string;
     selectedColor: string;
     backgroundColor: string;
     shortcuts: Shortcuts;
@@ -18,6 +19,7 @@ class Configuration {
         _heigth: number,
         _border: number,
         _separation: number,
+        _printedColor: string,
         _selectedColor: string,
         _backgroundColor: string,
         _shortcuts: Shortcuts
@@ -71,30 +73,41 @@ class Configuration {
             this.separation = _separation;
         }
 
+        if (_printedColor == undefined) {
+            this.printedColor = '#CCC23F';
+        } 
+        else {
+            this.printedColor = _printedColor;
+        }
+
         if (_selectedColor == undefined) {
-            this.selectedColor = '#ff0000';
+            this.selectedColor = '#CA504C';
         } 
         else {
             this.selectedColor = _selectedColor;
         }
 
         if (_backgroundColor == undefined) {
-            this.backgroundColor = '#EEEEEE';
+            this.backgroundColor = '#3582BF';
         } else {
             this.backgroundColor = _backgroundColor;
         }
 
         if (_shortcuts == undefined) {
-            this.shortcuts = new Shortcuts(null, null, null, null, null, null);
+            this.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null, null);
         } 
         else {
             this.shortcuts = new Shortcuts(
-                _shortcuts.moveSelectionUp,
-                _shortcuts.moveSelectionLeft,
-                _shortcuts.moveSelectionRight,
-                _shortcuts.moveSelectionDown,
-                _shortcuts.copySelection,
-                _shortcuts.pasteSelection);
+                _shortcuts.selection,
+                _shortcuts.removeSelection,
+                _shortcuts.movingSelectionUp,
+                _shortcuts.movingSelectionRight,
+                _shortcuts.movingSelectionDown,
+                _shortcuts.movingSelectionLeft,
+                _shortcuts.pastingSelectionUp,
+                _shortcuts.pastingSelectionRight,
+                _shortcuts.pastingSelectionDown,
+                _shortcuts.pastingSelectionLeft);
         }
     }
 }

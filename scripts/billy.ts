@@ -4,12 +4,10 @@
 
 class Billy {
     canvas: HTMLCanvasElement;
-    canvasSelection: HTMLCanvasElement;
-
     configuration: Configuration;
     measures: Array<Measure> = new Array<Measure>();
     blocks: Array<Block> = new Array<Block>();
-    pressed: number[];
+    pressed: number[] = [];
 
     isDragging: boolean = false;
     isClicking: boolean = false;
@@ -28,8 +26,8 @@ class Billy {
 
     constructor(
         _configuration: Configuration, 
-        _measures: Array<Measure>) 
-    {
+        _measures: Array<Measure>
+    ) {
         this.measures = _measures;
 
         this.configuration = new Configuration(
@@ -40,19 +38,16 @@ class Billy {
             _configuration.heigth, 
             _configuration.border, 
             _configuration.separation, 
-            _configuration.selectedColor, 
+            _configuration.printedColor,
+            _configuration.selectedColor,
             _configuration.backgroundColor,
             _configuration.shortcuts);
 
         if (this.configuration.shortcuts == null) {
-            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null);
+            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null, null);
         }
 
         this.canvas = <HTMLCanvasElement> document.getElementById(this.configuration.selector);
-        
-        document.getElementById(this.configuration.selector).innerHTML += "<canvas id='"+ this.configuration.selector + "-child'></canvas>";
-        
-        this.canvasSelection = <HTMLCanvasElement> document.getElementById(this.configuration.selector + "-child");
 
         this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
@@ -115,6 +110,7 @@ class Billy {
         }
 
         for (let i = 0; i <= this.blocks.length - 1; i++) {
+            newBlocks[i].printed = this.blocks[i].printed;
             newBlocks[i].selected = this.blocks[i].selected;
         }
 
@@ -138,29 +134,6 @@ class Billy {
         return hexa;
     }
 
-    direction(oldX, oldY, newX, newY): number {
-        if (oldY < newY) {
-            // it's going up
-            return 1;
-        }
-        else if (oldX > newX) {
-            // through the right
-            return 2
-        }
-        else if (oldY > newY) {
-            // now it's going down
-            return 3;
-        }
-        else if (oldX < newX) {
-            // and then left
-            return 4;
-        }
-        else {
-            // it stayed still
-            return 0;
-        }
-    }
-
     draw(): void {
         let context = this.canvas.getContext("2d");
 
@@ -170,6 +143,8 @@ class Billy {
         let inversedHeigth = this.configuration.heigth * -1;
 
         this.blocks = this.map();
+
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         for (let block of this.blocks) {
             let outX = block.x < inversedWidth || block.x > canvasWidthAndWidth;
@@ -181,11 +156,14 @@ class Billy {
 
             if (block.selected) {
                 context.fillStyle = this.configuration.selectedColor;
-            } else {
+            }
+            else if (block.printed) {
+                context.fillStyle = this.configuration.printedColor;
+            } 
+            else {
                 context.fillStyle = this.configuration.backgroundColor;
             }
             
-
             context.fillRect(block.x, block.y, block.width, block.height);
         }
     }
@@ -321,13 +299,17 @@ class Billy {
 
                         let block = this.blocks[index];
 
-                        if (block.selected) {
+                        if (block.printed) {
                             context.fillStyle = this.configuration.backgroundColor;
                         } else {
-                            context.fillStyle = this.configuration.selectedColor;
+                            context.fillStyle = this.configuration.printedColor;
                         }
                         
-                        block.selected = !block.selected;
+                        block.printed = !block.printed;
+
+                        if (!block.printed) {
+                            block.selected = false;
+                        }
 
                         context.fillRect(xofBlock, yofBlock, this.configuration.width, this.configuration.heigth);
 
@@ -339,7 +321,136 @@ class Billy {
     }
 
     behaviorSelecting(e): void {
+        let context = this.canvas.getContext("2d");
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.draw();
+
+        let rect = this.canvas.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+
+        context.beginPath();
+
+        context.moveTo(this.mouseX, this.mouseY);
+        context.lineTo(x, this.mouseY);
+
+        context.moveTo(x, this.mouseY);
+        context.lineTo(x, y);
+
+        context.moveTo(this.mouseX, this.mouseY);
+        context.lineTo(this.mouseX, y);
+
+        context.moveTo(this.mouseX, y);
+        context.lineTo(x, y);
+
+        context.closePath();
+        context.strokeStyle = this.configuration.backgroundColor;
+        context.stroke();
+
+        context.fillStyle = 'rgba(225, 225, 225, 0.3)';
+        context.fillRect(this.mouseX, this.mouseY, x - this.mouseX, y - this.mouseY);
+
+        // selection can go upside down sometimes, we must have fixed coordinates
+        let smallestX = this.mouseX > x ? x : this.mouseX;
+        let smallestY = this.mouseY > y ? y : this.mouseY;
+
+        let largestX = this.mouseX < x ? x : this.mouseX;
+        let largestY = this.mouseY < y ? y : this.mouseY;
         
+        let isBlockWithin = function(x, y): boolean {
+            if (x > smallestX && x < largestX) {
+                if (y > smallestY && y < largestY) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        let isSelectionWithin = function(nw, ne, se, sw) {
+            if (smallestX > nw.x && smallestX < ne.x) {
+                if (smallestY > nw.y && smallestY < sw.y) {
+                    return true;
+                }
+            }
+
+            if (largestX > nw.x && largestX < ne.x) {
+                if (smallestY > nw.y && smallestY < sw.y) {
+                    return true;
+                }
+            }
+
+            if (smallestX > nw.x && smallestX < ne.x) {
+                if (largestY > nw.y && largestY < sw.y) {
+                    return true;
+                }
+            }
+
+            if (largestX > nw.x && largestX < ne.x) {
+                if (largestY > nw.y && largestY < sw.y) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // let's check if block's corners are within selection
+        for (let block of this.blocks) {
+            // block.selected = false;
+
+            // only printed blocks can be selected
+            if (!block.printed) {
+                continue;
+            }
+
+            let nw = {
+                x: block.x,
+                y: block.y
+            };
+
+            if(isBlockWithin(nw.x, nw.y)) {
+                block.selected = true;
+                continue;
+            }
+
+            let ne = {
+                x: block.x + block.width,
+                y: block.y
+            };
+
+            if(isBlockWithin(ne.x, ne.y)) {
+                block.selected = true;
+                continue;
+            }
+
+            let se = {
+                x: block.x + block.width,
+                y: block.y + block.height
+            };
+
+            if(isBlockWithin(se.x, se.y)) {
+                block.selected = true;
+                continue;
+            }
+
+            let sw = {
+                x: block.x,
+                y: block.y + block.height
+            };
+
+            if(isBlockWithin(sw.x, sw.y)) {
+                block.selected = true;
+                continue;
+            }
+
+            // if none of block's corners are within selection, maybe selection is within block
+            if (isSelectionWithin(nw, ne, se, sw)) {
+                block.selected = true;
+                continue;
+            }
+        }
     }
 
     handleResizing(e): void {
@@ -351,9 +462,6 @@ class Billy {
 
         this.canvas.width = maxWidth;
         this.canvas.height = maxHeigth;
-
-        this.canvasSelection.width = maxWidth;
-        this.canvasSelection.height = maxHeigth;
 
         this.draw();
     }
@@ -376,11 +484,24 @@ class Billy {
     handleKeyUp(e): void {
         e.preventDefault();
         e.stopPropagation();
-        
+
+        let was = false;
+        if (this.isSelecting()) {
+            was = true;
+        }
+
         let index = this.pressed.indexOf(e.which);
 
         if (index > -1) {
             this.pressed.splice(index);
+
+            // if it was selecting, but it's not anymore
+            // we must remove selection from canvas
+            if (was) {
+                if (!this.isSelecting()) {
+                    this.draw();
+                }
+            }
         }
     }
 
@@ -397,10 +518,14 @@ class Billy {
 
         switch (e.which) {
             case 1:
+            default: 
                 this.mouseLeftButtonClicked = true;
                 this.mouseRightButtonClicked = false;
                 this.mouseMiddleButtonClicked = false;
-                this.behaviorClicking(e);
+
+                if (!this.isSelecting()) {
+                    this.behaviorClicking(e);
+                }
                 break;
             case 2:
                 this.mouseLeftButtonClicked = false;
@@ -410,11 +535,6 @@ class Billy {
             case 3:
                 this.mouseLeftButtonClicked = false;
                 this.mouseRightButtonClicked = true;
-                this.mouseMiddleButtonClicked = false;
-                break;
-            default: 
-                this.mouseLeftButtonClicked = true;
-                this.mouseRightButtonClicked = false;
                 this.mouseMiddleButtonClicked = false;
                 break;
         }
@@ -430,19 +550,15 @@ class Billy {
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
 
-        // we must remove any selection on child canvas
-        let index = this.pressed.indexOf(16);
-
-        if (index > -1) {
-            this.pressed.splice(index);
-        }
+        // to remove any selection
+        this.draw();
     }
 
     handleMouseMove(e): void {
         e.preventDefault();
         e.stopPropagation();
 
-        if (this.isSelecting() && this.mouseLeftButtonClicked) {
+        if (this.isSelecting() && this.mouseRightButtonClicked) {
             this.behaviorSelecting(e);
         }
         else if (this.mouseLeftButtonClicked) {
@@ -480,12 +596,12 @@ class Billy {
     }
 
     isSelecting(): boolean {
-        if (this.configuration.shortcuts.selecting.length != this.pressed.length) {
+        if (this.configuration.shortcuts.selection.length != this.pressed.length) {
             return false;
         }
 
-        for (let i = 0; i <= this.configuration.shortcuts.selecting.length - 1; i++) {
-            if (this.configuration.shortcuts.selecting[i] != this.pressed[i]) { 
+        for (let i = 0; i <= this.configuration.shortcuts.selection.length - 1; i++) {
+            if (this.configuration.shortcuts.selection[i] != this.pressed[i]) { 
                 return false
             }
         }

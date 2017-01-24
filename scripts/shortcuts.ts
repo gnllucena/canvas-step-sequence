@@ -1,5 +1,6 @@
 class Shortcuts {
-    selecting: number[];
+    selection: number[];
+    removeSelection: number[];
     movingSelectionUp: number[];
     movingSelectionRight: number[];
     movingSelectionDown: number[];
@@ -10,7 +11,8 @@ class Shortcuts {
     pastingSelectionLeft: number[]
 
     constructor(
-        _selecting: number[],
+        _selection: number[],
+        _removeSelection: number[],
         _movingSelectionUp: number[],
         _movingSelectionRight: number[],
         _movingSelectionDown: number[],
@@ -20,11 +22,18 @@ class Shortcuts {
         _pastingSelectionDown: number[],
         _pastingSelectionLeft: number[]
     ) {
-        if (_selecting == undefined) {
-            this.selecting = [16];
+        if (_selection == undefined) {
+            this.selection = [16];
         } 
         else { 
-            this.selecting = _selecting; 
+            this.selection = _selection; 
+        }
+
+        if (_removeSelection == undefined) {
+            this.removeSelection = [27];
+        } 
+        else { 
+            this.removeSelection = _removeSelection; 
         }
 
         if (_movingSelectionUp == undefined) {

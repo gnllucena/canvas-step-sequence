@@ -5,6 +5,7 @@ var Billy = (function () {
     function Billy(_configuration, _measures) {
         this.measures = new Array();
         this.blocks = new Array();
+        this.pressed = [];
         this.isDragging = false;
         this.isClicking = false;
         this.mouseLeftButtonClicked = false;
@@ -15,13 +16,11 @@ var Billy = (function () {
         this.widthMeasures = 0;
         this.heigthMeasures = 0;
         this.measures = _measures;
-        this.configuration = new Configuration(_configuration.selector, _configuration.frequencies, _configuration.margin, _configuration.width, _configuration.heigth, _configuration.border, _configuration.separation, _configuration.selectedColor, _configuration.backgroundColor, _configuration.shortcuts);
+        this.configuration = new Configuration(_configuration.selector, _configuration.frequencies, _configuration.margin, _configuration.width, _configuration.heigth, _configuration.border, _configuration.separation, _configuration.printedColor, _configuration.selectedColor, _configuration.backgroundColor, _configuration.shortcuts);
         if (this.configuration.shortcuts == null) {
-            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null);
+            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null, null);
         }
         this.canvas = document.getElementById(this.configuration.selector);
-        document.getElementById(this.configuration.selector).innerHTML += "<canvas id='" + this.configuration.selector + "-child'></canvas>";
-        this.canvasSelection = document.getElementById(this.configuration.selector + "-child");
         this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
@@ -67,6 +66,7 @@ var Billy = (function () {
             this.widthMeasures += (pulsesTimesRhythm * this.configuration.width) + ((pulsesTimesRhythm * this.configuration.border)) + marginAndSeparation;
         }
         for (var i = 0; i <= this.blocks.length - 1; i++) {
+            newBlocks[i].printed = this.blocks[i].printed;
             newBlocks[i].selected = this.blocks[i].selected;
         }
         this.blocks = newBlocks;
@@ -81,28 +81,6 @@ var Billy = (function () {
         var hexa = "#" + ("000000" + rgb).slice(-6);
         return hexa;
     };
-    Billy.prototype.direction = function (oldX, oldY, newX, newY) {
-        if (oldY < newY) {
-            // it's going up
-            return 1;
-        }
-        else if (oldX > newX) {
-            // through the right
-            return 2;
-        }
-        else if (oldY > newY) {
-            // now it's going down
-            return 3;
-        }
-        else if (oldX < newX) {
-            // and then left
-            return 4;
-        }
-        else {
-            // it stayed still
-            return 0;
-        }
-    };
     Billy.prototype.draw = function () {
         var context = this.canvas.getContext("2d");
         var canvasWidthAndWidth = this.canvas.width + this.configuration.width;
@@ -110,6 +88,7 @@ var Billy = (function () {
         var inversedWidth = this.configuration.width * -1;
         var inversedHeigth = this.configuration.heigth * -1;
         this.blocks = this.map();
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         for (var _i = 0, _a = this.blocks; _i < _a.length; _i++) {
             var block = _a[_i];
             var outX = block.x < inversedWidth || block.x > canvasWidthAndWidth;
@@ -119,6 +98,9 @@ var Billy = (function () {
             }
             if (block.selected) {
                 context.fillStyle = this.configuration.selectedColor;
+            }
+            else if (block.printed) {
+                context.fillStyle = this.configuration.printedColor;
             }
             else {
                 context.fillStyle = this.configuration.backgroundColor;
@@ -228,13 +210,16 @@ var Billy = (function () {
                             return block.x.toString() + '-' + block.y;
                         }).indexOf(xofBlock.toString() + '-' + yofBlock.toString());
                         var block = this.blocks[index];
-                        if (block.selected) {
+                        if (block.printed) {
                             context.fillStyle = this.configuration.backgroundColor;
                         }
                         else {
-                            context.fillStyle = this.configuration.selectedColor;
+                            context.fillStyle = this.configuration.printedColor;
                         }
-                        block.selected = !block.selected;
+                        block.printed = !block.printed;
+                        if (!block.printed) {
+                            block.selected = false;
+                        }
                         context.fillRect(xofBlock, yofBlock, this.configuration.width, this.configuration.heigth);
                         break;
                     }
@@ -243,6 +228,108 @@ var Billy = (function () {
         }
     };
     Billy.prototype.behaviorSelecting = function (e) {
+        var context = this.canvas.getContext("2d");
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.draw();
+        var rect = this.canvas.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
+        context.beginPath();
+        context.moveTo(this.mouseX, this.mouseY);
+        context.lineTo(x, this.mouseY);
+        context.moveTo(x, this.mouseY);
+        context.lineTo(x, y);
+        context.moveTo(this.mouseX, this.mouseY);
+        context.lineTo(this.mouseX, y);
+        context.moveTo(this.mouseX, y);
+        context.lineTo(x, y);
+        context.closePath();
+        context.strokeStyle = this.configuration.backgroundColor;
+        context.stroke();
+        context.fillStyle = 'rgba(225, 225, 225, 0.3)';
+        context.fillRect(this.mouseX, this.mouseY, x - this.mouseX, y - this.mouseY);
+        // selection can go upside down sometimes, we must have fixed coordinates
+        var smallestX = this.mouseX > x ? x : this.mouseX;
+        var smallestY = this.mouseY > y ? y : this.mouseY;
+        var largestX = this.mouseX < x ? x : this.mouseX;
+        var largestY = this.mouseY < y ? y : this.mouseY;
+        var isBlockWithin = function (x, y) {
+            if (x > smallestX && x < largestX) {
+                if (y > smallestY && y < largestY) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        var isSelectionWithin = function (nw, ne, se, sw) {
+            if (smallestX > nw.x && smallestX < ne.x) {
+                if (smallestY > nw.y && smallestY < sw.y) {
+                    return true;
+                }
+            }
+            if (largestX > nw.x && largestX < ne.x) {
+                if (smallestY > nw.y && smallestY < sw.y) {
+                    return true;
+                }
+            }
+            if (smallestX > nw.x && smallestX < ne.x) {
+                if (largestY > nw.y && largestY < sw.y) {
+                    return true;
+                }
+            }
+            if (largestX > nw.x && largestX < ne.x) {
+                if (largestY > nw.y && largestY < sw.y) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        // let's check if block's corners are within selection
+        for (var _i = 0, _a = this.blocks; _i < _a.length; _i++) {
+            var block = _a[_i];
+            // block.selected = false;
+            // only printed blocks can be selected
+            if (!block.printed) {
+                continue;
+            }
+            var nw = {
+                x: block.x,
+                y: block.y
+            };
+            if (isBlockWithin(nw.x, nw.y)) {
+                block.selected = true;
+                continue;
+            }
+            var ne = {
+                x: block.x + block.width,
+                y: block.y
+            };
+            if (isBlockWithin(ne.x, ne.y)) {
+                block.selected = true;
+                continue;
+            }
+            var se = {
+                x: block.x + block.width,
+                y: block.y + block.height
+            };
+            if (isBlockWithin(se.x, se.y)) {
+                block.selected = true;
+                continue;
+            }
+            var sw = {
+                x: block.x,
+                y: block.y + block.height
+            };
+            if (isBlockWithin(sw.x, sw.y)) {
+                block.selected = true;
+                continue;
+            }
+            // if none of block's corners are within selection, maybe selection is within block
+            if (isSelectionWithin(nw, ne, se, sw)) {
+                block.selected = true;
+                continue;
+            }
+        }
     };
     Billy.prototype.handleResizing = function (e) {
         var maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * 0.05;
@@ -251,8 +338,6 @@ var Billy = (function () {
         this.offsetY = 0;
         this.canvas.width = maxWidth;
         this.canvas.height = maxHeigth;
-        this.canvasSelection.width = maxWidth;
-        this.canvasSelection.height = maxHeigth;
         this.draw();
     };
     Billy.prototype.handleKeyDown = function (e) {
@@ -269,9 +354,20 @@ var Billy = (function () {
     Billy.prototype.handleKeyUp = function (e) {
         e.preventDefault();
         e.stopPropagation();
+        var was = false;
+        if (this.isSelecting()) {
+            was = true;
+        }
         var index = this.pressed.indexOf(e.which);
         if (index > -1) {
             this.pressed.splice(index);
+            // if it was selecting, but it's not anymore
+            // we must remove selection from canvas
+            if (was) {
+                if (!this.isSelecting()) {
+                    this.draw();
+                }
+            }
         }
     };
     Billy.prototype.handleMouseDown = function (e) {
@@ -284,10 +380,13 @@ var Billy = (function () {
         this.isClicking = true;
         switch (e.which) {
             case 1:
+            default:
                 this.mouseLeftButtonClicked = true;
                 this.mouseRightButtonClicked = false;
                 this.mouseMiddleButtonClicked = false;
-                this.behaviorClicking(e);
+                if (!this.isSelecting()) {
+                    this.behaviorClicking(e);
+                }
                 break;
             case 2:
                 this.mouseLeftButtonClicked = false;
@@ -297,11 +396,6 @@ var Billy = (function () {
             case 3:
                 this.mouseLeftButtonClicked = false;
                 this.mouseRightButtonClicked = true;
-                this.mouseMiddleButtonClicked = false;
-                break;
-            default:
-                this.mouseLeftButtonClicked = true;
-                this.mouseRightButtonClicked = false;
                 this.mouseMiddleButtonClicked = false;
                 break;
         }
@@ -314,16 +408,13 @@ var Billy = (function () {
         this.mouseLeftButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
-        // we must remove any selection on child canvas
-        var index = this.pressed.indexOf(16);
-        if (index > -1) {
-            this.pressed.splice(index);
-        }
+        // to remove any selection
+        this.draw();
     };
     Billy.prototype.handleMouseMove = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        if (this.isSelecting() && this.mouseLeftButtonClicked) {
+        if (this.isSelecting() && this.mouseRightButtonClicked) {
             this.behaviorSelecting(e);
         }
         else if (this.mouseLeftButtonClicked) {
@@ -354,112 +445,103 @@ var Billy = (function () {
         this.mouseRightButtonClicked = false;
     };
     Billy.prototype.isSelecting = function () {
-        if (this.configuration.shortcuts.selecting.length != this.pressed.length) {
+        if (this.configuration.shortcuts.selection.length != this.pressed.length) {
             return false;
         }
-        var is = true;
-        for (var i = 0; i <= this.configuration.shortcuts.selecting.length - 1; i++) {
-            if (this.configuration.shortcuts.selecting[i] == this.pressed[i]) {
-                is = false;
+        for (var i = 0; i <= this.configuration.shortcuts.selection.length - 1; i++) {
+            if (this.configuration.shortcuts.selection[i] != this.pressed[i]) {
+                return false;
             }
         }
-        return is;
+        return true;
     };
     Billy.prototype.isShortcutMovingUp = function () {
         if (this.configuration.shortcuts.movingSelectionUp.length != this.pressed.length) {
             return false;
         }
-        var is = true;
         for (var i = 0; i <= this.configuration.shortcuts.movingSelectionUp.length - 1; i++) {
-            if (this.configuration.shortcuts.movingSelectionUp[i] == this.pressed[i]) {
-                is = false;
+            if (this.configuration.shortcuts.movingSelectionUp[i] != this.pressed[i]) {
+                return false;
             }
         }
-        return is;
+        return true;
     };
     Billy.prototype.isShortcutMovingRight = function () {
         if (this.configuration.shortcuts.movingSelectionRight.length != this.pressed.length) {
             return false;
         }
-        var is = true;
         for (var i = 0; i <= this.configuration.shortcuts.movingSelectionRight.length - 1; i++) {
-            if (this.configuration.shortcuts.movingSelectionRight[i] == this.pressed[i]) {
-                is = false;
+            if (this.configuration.shortcuts.movingSelectionRight[i] != this.pressed[i]) {
+                return false;
             }
         }
-        return is;
+        return true;
     };
     Billy.prototype.isShortcutMovingDown = function () {
         if (this.configuration.shortcuts.movingSelectionDown.length != this.pressed.length) {
             return false;
         }
-        var is = true;
         for (var i = 0; i <= this.configuration.shortcuts.movingSelectionDown.length - 1; i++) {
-            if (this.configuration.shortcuts.movingSelectionDown[i] == this.pressed[i]) {
-                is = false;
+            if (this.configuration.shortcuts.movingSelectionDown[i] != this.pressed[i]) {
+                return false;
             }
         }
-        return is;
+        return true;
     };
     Billy.prototype.isShortcutMovingLeft = function () {
         if (this.configuration.shortcuts.movingSelectionLeft.length != this.pressed.length) {
             return false;
         }
-        var is = true;
         for (var i = 0; i <= this.configuration.shortcuts.movingSelectionLeft.length - 1; i++) {
-            if (this.configuration.shortcuts.movingSelectionLeft[i] == this.pressed[i]) {
-                is = false;
+            if (this.configuration.shortcuts.movingSelectionLeft[i] != this.pressed[i]) {
+                return false;
             }
         }
-        return is;
+        return true;
     };
     Billy.prototype.isShortcutPastingUp = function () {
         if (this.configuration.shortcuts.pastingSelectionUp.length != this.pressed.length) {
             return false;
         }
-        var is = true;
         for (var i = 0; i <= this.configuration.shortcuts.pastingSelectionUp.length - 1; i++) {
-            if (this.configuration.shortcuts.pastingSelectionUp[i] == this.pressed[i]) {
-                is = false;
+            if (this.configuration.shortcuts.pastingSelectionUp[i] != this.pressed[i]) {
+                return false;
             }
         }
-        return is;
+        return true;
     };
     Billy.prototype.isShortcutPastingRight = function () {
         if (this.configuration.shortcuts.pastingSelectionRight.length != this.pressed.length) {
             return false;
         }
-        var is = true;
         for (var i = 0; i <= this.configuration.shortcuts.pastingSelectionRight.length - 1; i++) {
-            if (this.configuration.shortcuts.pastingSelectionRight[i] == this.pressed[i]) {
-                is = false;
+            if (this.configuration.shortcuts.pastingSelectionRight[i] != this.pressed[i]) {
+                return false;
             }
         }
-        return is;
+        return true;
     };
     Billy.prototype.isShortcutPastingDown = function () {
         if (this.configuration.shortcuts.pastingSelectionDown.length != this.pressed.length) {
             return false;
         }
-        var is = true;
         for (var i = 0; i <= this.configuration.shortcuts.pastingSelectionDown.length - 1; i++) {
             if (this.configuration.shortcuts.pastingSelectionDown[i] == this.pressed[i]) {
-                is = false;
+                return false;
             }
         }
-        return is;
+        return true;
     };
     Billy.prototype.isShortcutPastingLeft = function () {
         if (this.configuration.shortcuts.pastingSelectionLeft.length != this.pressed.length) {
             return false;
         }
-        var is = true;
         for (var i = 0; i <= this.configuration.shortcuts.pastingSelectionLeft.length - 1; i++) {
             if (this.configuration.shortcuts.pastingSelectionLeft[i] == this.pressed[i]) {
-                is = false;
+                return false;
             }
         }
-        return is;
+        return true;
     };
     return Billy;
 }());
@@ -469,12 +551,13 @@ var Block = (function () {
         this.y = _y;
         this.width = _width;
         this.height = _height;
+        this.printed = false;
         this.selected = false;
     }
     return Block;
 }());
 var Configuration = (function () {
-    function Configuration(_selector, _frequencies, _margin, _width, _heigth, _border, _separation, _selectedColor, _backgroundColor, _shortcuts) {
+    function Configuration(_selector, _frequencies, _margin, _width, _heigth, _border, _separation, _printedColor, _selectedColor, _backgroundColor, _shortcuts) {
         if (_selector == undefined) {
             this.selector = "canvas";
         }
@@ -517,23 +600,29 @@ var Configuration = (function () {
         else {
             this.separation = _separation;
         }
+        if (_printedColor == undefined) {
+            this.printedColor = '#CCC23F';
+        }
+        else {
+            this.printedColor = _printedColor;
+        }
         if (_selectedColor == undefined) {
-            this.selectedColor = '#ff0000';
+            this.selectedColor = '#CA504C';
         }
         else {
             this.selectedColor = _selectedColor;
         }
         if (_backgroundColor == undefined) {
-            this.backgroundColor = '#EEEEEE';
+            this.backgroundColor = '#3582BF';
         }
         else {
             this.backgroundColor = _backgroundColor;
         }
         if (_shortcuts == undefined) {
-            this.shortcuts = new Shortcuts(null, null, null, null, null, null);
+            this.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null, null);
         }
         else {
-            this.shortcuts = new Shortcuts(_shortcuts.moveSelectionUp, _shortcuts.moveSelectionLeft, _shortcuts.moveSelectionRight, _shortcuts.moveSelectionDown, _shortcuts.copySelection, _shortcuts.pasteSelection);
+            this.shortcuts = new Shortcuts(_shortcuts.selection, _shortcuts.removeSelection, _shortcuts.movingSelectionUp, _shortcuts.movingSelectionRight, _shortcuts.movingSelectionDown, _shortcuts.movingSelectionLeft, _shortcuts.pastingSelectionUp, _shortcuts.pastingSelectionRight, _shortcuts.pastingSelectionDown, _shortcuts.pastingSelectionLeft);
         }
     }
     return Configuration;
@@ -556,12 +645,18 @@ var Measure = (function () {
     return Measure;
 }());
 var Shortcuts = (function () {
-    function Shortcuts(_selecting, _movingSelectionUp, _movingSelectionRight, _movingSelectionDown, _movingSelectionLeft, _pastingSelectionUp, _pastingSelectionRight, _pastingSelectionDown, _pastingSelectionLeft) {
-        if (_selecting == undefined) {
-            this.selecting = [16];
+    function Shortcuts(_selection, _removeSelection, _movingSelectionUp, _movingSelectionRight, _movingSelectionDown, _movingSelectionLeft, _pastingSelectionUp, _pastingSelectionRight, _pastingSelectionDown, _pastingSelectionLeft) {
+        if (_selection == undefined) {
+            this.selection = [16];
         }
         else {
-            this.selecting = _selecting;
+            this.selection = _selection;
+        }
+        if (_removeSelection == undefined) {
+            this.removeSelection = [27];
+        }
+        else {
+            this.removeSelection = _removeSelection;
         }
         if (_movingSelectionUp == undefined) {
             this.movingSelectionUp = [38];

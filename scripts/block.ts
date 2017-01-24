@@ -3,6 +3,7 @@ class Block {
     y: number;
     width: number;
     height: number;
+    printed: boolean;
     selected: boolean;
 
     constructor(
@@ -15,6 +16,7 @@ class Block {
         this.y = _y;
         this.width = _width;
         this.height = _height;
+        this.printed = false;
         this.selected = false;
     }
 }
