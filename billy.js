@@ -6,8 +6,6 @@ var Billy = (function () {
         this.measures = new Array();
         this.blocks = new Array();
         this.pressed = [];
-        this.isDragging = false;
-        this.isClicking = false;
         this.mouseLeftButtonClicked = false;
         this.mouseRightButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
@@ -109,7 +107,7 @@ var Billy = (function () {
         }
     };
     Billy.prototype.behaviorDragging = function (e) {
-        if (!this.isDragging) {
+        if (!this.isShortcutDragging()) {
             return;
         }
         var rect = this.canvas.getBoundingClientRect();
@@ -138,8 +136,8 @@ var Billy = (function () {
         context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.draw();
     };
-    Billy.prototype.behaviorClicking = function (e) {
-        if (!this.isClicking || !this.mouseLeftButtonClicked) {
+    Billy.prototype.behaviorPrinting = function (e) {
+        if (!this.isShortcutPrinting()) {
             return;
         }
         var sorted = this.map().slice(0).sort(function (a, b) {
@@ -217,6 +215,7 @@ var Billy = (function () {
                             context.fillStyle = this.configuration.printedColor;
                         }
                         block.printed = !block.printed;
+                        // if it's not printed anymore, it's not selected either
                         if (!block.printed) {
                             block.selected = false;
                         }
@@ -228,6 +227,9 @@ var Billy = (function () {
         }
     };
     Billy.prototype.behaviorSelecting = function (e) {
+        if (!this.isShortcutSelecting()) {
+            return;
+        }
         var context = this.canvas.getContext("2d");
         context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.draw();
@@ -284,10 +286,23 @@ var Billy = (function () {
             }
             return false;
         };
+        var isCrossingThrough = function (nw, ne, se, sw) {
+            if (smallestX < nw.x && largestX > nw.x) {
+                if (smallestY > nw.y && largestY < sw.y) {
+                    return true;
+                }
+            }
+            if (smallestY < nw.y && largestY > nw.y) {
+                if (smallestX > nw.x && largestX < ne.x) {
+                    return true;
+                }
+            }
+            return false;
+        };
         // let's check if block's corners are within selection
         for (var _i = 0, _a = this.blocks; _i < _a.length; _i++) {
             var block = _a[_i];
-            // block.selected = false;
+            block.selected = false;
             // only printed blocks can be selected
             if (!block.printed) {
                 continue;
@@ -296,36 +311,41 @@ var Billy = (function () {
                 x: block.x,
                 y: block.y
             };
-            if (isBlockWithin(nw.x, nw.y)) {
-                block.selected = true;
-                continue;
-            }
-            var ne = {
-                x: block.x + block.width,
-                y: block.y
-            };
-            if (isBlockWithin(ne.x, ne.y)) {
-                block.selected = true;
-                continue;
-            }
             var se = {
                 x: block.x + block.width,
                 y: block.y + block.height
             };
-            if (isBlockWithin(se.x, se.y)) {
-                block.selected = true;
-                continue;
-            }
+            var ne = {
+                x: block.x + block.width,
+                y: block.y
+            };
             var sw = {
                 x: block.x,
                 y: block.y + block.height
             };
+            if (isBlockWithin(nw.x, nw.y)) {
+                block.selected = true;
+                continue;
+            }
+            if (isBlockWithin(ne.x, ne.y)) {
+                block.selected = true;
+                continue;
+            }
+            if (isBlockWithin(se.x, se.y)) {
+                block.selected = true;
+                continue;
+            }
             if (isBlockWithin(sw.x, sw.y)) {
                 block.selected = true;
                 continue;
             }
             // if none of block's corners are within selection, maybe selection is within block
             if (isSelectionWithin(nw, ne, se, sw)) {
+                block.selected = true;
+                continue;
+            }
+            // or maybe selections is crossing blocks without touching north and south, or, east and west
+            if (isCrossingThrough(nw, ne, se, sw)) {
                 block.selected = true;
                 continue;
             }
@@ -346,6 +366,7 @@ var Billy = (function () {
         var index = this.pressed.indexOf(e.which);
         if (index < 0) {
             this.pressed.push(e.which);
+            // always sort array in ascending order
             this.pressed = this.pressed.sort(function (a, b) {
                 return a - b;
             });
@@ -355,7 +376,7 @@ var Billy = (function () {
         e.preventDefault();
         e.stopPropagation();
         var was = false;
-        if (this.isSelecting()) {
+        if (this.isShortcutSelecting()) {
             was = true;
         }
         var index = this.pressed.indexOf(e.which);
@@ -364,7 +385,7 @@ var Billy = (function () {
             // if it was selecting, but it's not anymore
             // we must remove selection from canvas
             if (was) {
-                if (!this.isSelecting()) {
+                if (!this.isShortcutSelecting()) {
                     this.draw();
                 }
             }
@@ -376,16 +397,14 @@ var Billy = (function () {
         var y = e.clientY - rect.top;
         this.mouseX = x;
         this.mouseY = y;
-        this.isDragging = true;
-        this.isClicking = true;
         switch (e.which) {
             case 1:
             default:
                 this.mouseLeftButtonClicked = true;
                 this.mouseRightButtonClicked = false;
                 this.mouseMiddleButtonClicked = false;
-                if (!this.isSelecting()) {
-                    this.behaviorClicking(e);
+                if (!this.isShortcutSelecting()) {
+                    this.behaviorPrinting(e);
                 }
                 break;
             case 2:
@@ -403,18 +422,16 @@ var Billy = (function () {
     Billy.prototype.handleMouseUp = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        this.isDragging = false;
-        this.isClicking = false;
+        // to remove any selections
+        this.draw();
         this.mouseLeftButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
-        // to remove any selection
-        this.draw();
     };
     Billy.prototype.handleMouseMove = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        if (this.isSelecting() && this.mouseRightButtonClicked) {
+        if (this.isShortcutSelecting() && this.mouseLeftButtonClicked) {
             this.behaviorSelecting(e);
         }
         else if (this.mouseLeftButtonClicked) {
@@ -426,7 +443,7 @@ var Billy = (function () {
             this.mouseY = y;
             var newColor = this.color(this.mouseX, this.mouseY);
             if (oldColor != newColor) {
-                this.behaviorClicking(e);
+                this.behaviorPrinting(e);
             }
         }
         else if (this.mouseRightButtonClicked) {
@@ -438,13 +455,17 @@ var Billy = (function () {
     Billy.prototype.handleMouseOut = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        this.isDragging = false;
-        this.isClicking = false;
         this.mouseLeftButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
     };
-    Billy.prototype.isSelecting = function () {
+    Billy.prototype.isShortcutPrinting = function () {
+        return this.mouseLeftButtonClicked;
+    };
+    Billy.prototype.isShortcutDragging = function () {
+        return this.mouseRightButtonClicked;
+    };
+    Billy.prototype.isShortcutSelecting = function () {
         if (this.configuration.shortcuts.selection.length != this.pressed.length) {
             return false;
         }

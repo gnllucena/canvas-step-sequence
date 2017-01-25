@@ -9,9 +9,6 @@ class Billy {
     blocks: Array<Block> = new Array<Block>();
     pressed: number[] = [];
 
-    isDragging: boolean = false;
-    isClicking: boolean = false;
-
     mouseLeftButtonClicked: boolean = false;
     mouseRightButtonClicked: boolean = false;
     mouseMiddleButtonClicked: boolean = false;
@@ -169,7 +166,7 @@ class Billy {
     }
 
     behaviorDragging(e): void {
-        if (!this.isDragging) {
+        if (!this.isShortcutDragging()) {
             return;
         }
 
@@ -207,8 +204,8 @@ class Billy {
         this.draw();
     }
 
-    behaviorClicking(e): void {
-        if (!this.isClicking || !this.mouseLeftButtonClicked) {
+    behaviorPrinting(e): void {
+        if (!this.isShortcutPrinting()) {
             return;
         }
 
@@ -307,6 +304,7 @@ class Billy {
                         
                         block.printed = !block.printed;
 
+                        // if it's not printed anymore, it's not selected either
                         if (!block.printed) {
                             block.selected = false;
                         }
@@ -321,6 +319,10 @@ class Billy {
     }
 
     behaviorSelecting(e): void {
+        if (!this.isShortcutSelecting()) {
+            return;
+        }
+
         let context = this.canvas.getContext("2d");
         context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -357,6 +359,7 @@ class Billy {
 
         let largestX = this.mouseX < x ? x : this.mouseX;
         let largestY = this.mouseY < y ? y : this.mouseY;
+        
         
         let isBlockWithin = function(x, y): boolean {
             if (x > smallestX && x < largestX) {
@@ -396,9 +399,25 @@ class Billy {
             return false;
         }
 
+        let isCrossingThrough = function(nw, ne, se, sw): boolean {
+            if (smallestX < nw.x && largestX > nw.x) {
+                if (smallestY > nw.y && largestY < sw.y) {
+                    return true;
+                }
+            }
+
+            if (smallestY < nw.y && largestY > nw.y) {
+                if (smallestX > nw.x && largestX < ne.x) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
         // let's check if block's corners are within selection
         for (let block of this.blocks) {
-            // block.selected = false;
+            block.selected = false;
 
             // only printed blocks can be selected
             if (!block.printed) {
@@ -410,35 +429,35 @@ class Billy {
                 y: block.y
             };
 
-            if(isBlockWithin(nw.x, nw.y)) {
-                block.selected = true;
-                continue;
-            }
+            let se = {
+                x: block.x + block.width,
+                y: block.y + block.height
+            };
 
             let ne = {
                 x: block.x + block.width,
                 y: block.y
             };
 
+            let sw = {
+                x: block.x,
+                y: block.y + block.height
+            };
+
+            if(isBlockWithin(nw.x, nw.y)) {
+                block.selected = true;
+                continue;
+            }
+
             if(isBlockWithin(ne.x, ne.y)) {
                 block.selected = true;
                 continue;
             }
 
-            let se = {
-                x: block.x + block.width,
-                y: block.y + block.height
-            };
-
             if(isBlockWithin(se.x, se.y)) {
                 block.selected = true;
                 continue;
             }
-
-            let sw = {
-                x: block.x,
-                y: block.y + block.height
-            };
 
             if(isBlockWithin(sw.x, sw.y)) {
                 block.selected = true;
@@ -447,6 +466,12 @@ class Billy {
 
             // if none of block's corners are within selection, maybe selection is within block
             if (isSelectionWithin(nw, ne, se, sw)) {
+                block.selected = true;
+                continue;
+            }
+
+            // or maybe selections is crossing blocks without touching north and south, or, east and west
+            if (isCrossingThrough(nw, ne, se, sw)) {
                 block.selected = true;
                 continue;
             }
@@ -475,6 +500,7 @@ class Billy {
         if (index < 0) {
             this.pressed.push(e.which);
 
+            // always sort array in ascending order
             this.pressed = this.pressed.sort(function (a, b) { 
                 return a - b; 
             });
@@ -486,7 +512,7 @@ class Billy {
         e.stopPropagation();
 
         let was = false;
-        if (this.isSelecting()) {
+        if (this.isShortcutSelecting()) {
             was = true;
         }
 
@@ -498,7 +524,7 @@ class Billy {
             // if it was selecting, but it's not anymore
             // we must remove selection from canvas
             if (was) {
-                if (!this.isSelecting()) {
+                if (!this.isShortcutSelecting()) {
                     this.draw();
                 }
             }
@@ -513,8 +539,6 @@ class Billy {
 
         this.mouseX = x; 
         this.mouseY = y;
-        this.isDragging = true;
-        this.isClicking = true;
 
         switch (e.which) {
             case 1:
@@ -523,8 +547,8 @@ class Billy {
                 this.mouseRightButtonClicked = false;
                 this.mouseMiddleButtonClicked = false;
 
-                if (!this.isSelecting()) {
-                    this.behaviorClicking(e);
+                if (!this.isShortcutSelecting()) {
+                    this.behaviorPrinting(e);
                 }
                 break;
             case 2:
@@ -544,21 +568,19 @@ class Billy {
         e.preventDefault();
         e.stopPropagation();
 
-        this.isDragging = false;
-        this.isClicking = false;
+        // to remove any selections
+        this.draw();
+
         this.mouseLeftButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
-
-        // to remove any selection
-        this.draw();
     }
 
     handleMouseMove(e): void {
         e.preventDefault();
         e.stopPropagation();
 
-        if (this.isSelecting() && this.mouseRightButtonClicked) {
+        if (this.isShortcutSelecting() && this.mouseLeftButtonClicked) {
             this.behaviorSelecting(e);
         }
         else if (this.mouseLeftButtonClicked) {
@@ -574,7 +596,7 @@ class Billy {
             let newColor = this.color(this.mouseX, this.mouseY);
 
             if (oldColor != newColor) {
-                this.behaviorClicking(e);
+                this.behaviorPrinting(e);
             }
         } 
         else if (this.mouseRightButtonClicked) {
@@ -588,14 +610,20 @@ class Billy {
         e.preventDefault();
         e.stopPropagation();
         
-        this.isDragging = false;
-        this.isClicking = false;
         this.mouseLeftButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
     }
 
-    isSelecting(): boolean {
+    isShortcutPrinting(): boolean {
+        return this.mouseLeftButtonClicked;
+    }
+
+    isShortcutDragging(): boolean {
+        return this.mouseRightButtonClicked;
+    }
+
+    isShortcutSelecting(): boolean {
         if (this.configuration.shortcuts.selection.length != this.pressed.length) {
             return false;
         }
