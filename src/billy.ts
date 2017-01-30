@@ -41,7 +41,7 @@ class Billy {
             _configuration.shortcuts);
 
         if (this.configuration.shortcuts == null) {
-            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null, null);
+            this.configuration.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null, null, null, null);
         }
 
         this.canvas = <HTMLCanvasElement> document.getElementById(this.configuration.selector);
@@ -52,6 +52,7 @@ class Billy {
         this.canvas.addEventListener('mouseout', this.handleMouseOut.bind(this));
         this.canvas.addEventListener('keydown', this.handleKeyDown.bind(this));
         this.canvas.addEventListener('keyup', this.handleKeyUp.bind(this));
+        this.canvas.addEventListener('mousewheel', this.handleMouseWheel.bind(this));
 
         this.canvas.oncontextmenu = function (e) {
             e.preventDefault();
@@ -106,6 +107,7 @@ class Billy {
             this.widthMeasures += (pulsesTimesRhythm * this.configuration.width) + ((pulsesTimesRhythm * this.configuration.border)) + marginAndSeparation;
         }
 
+        // ugly.. but fast enough
         for (let i = 0; i <= this.blocks.length - 1; i++) {
             newBlocks[i].printed = this.blocks[i].printed;
             newBlocks[i].selected = this.blocks[i].selected;
@@ -129,6 +131,35 @@ class Billy {
         let hexa = "#" + ("000000" + rgb).slice(-6);
 
         return hexa;
+    }
+
+    measure(x, y): Measure {
+        // let's find x's measure
+        let marginAndBorder = this.configuration.margin + this.configuration.border;
+        let widthAndBorder = this.configuration.width + this.configuration.border;
+        let marginAndSeparation = this.configuration.margin + this.configuration.separation;
+
+        let heigthFrequencies = marginAndBorder;
+        
+        let xablau: number = 0;
+
+        for (let i = 0; i <= this.measures.length - 1; i++) {
+            let measure = this.measures[i];
+
+            let pulsesTimesRhythm = measure.pulses * measure.rhythm;
+            let beginingOfMeasure = xablau + marginAndBorder;
+
+            // margin or separation
+            if (x < beginingOfMeasure) {
+                return null;
+            }
+
+            for (let w = 0; w <= pulsesTimesRhythm - 1; w++) {
+                widthPulses += widthAndBorder;
+            }
+
+            xablau += (pulsesTimesRhythm * this.configuration.width) + ((pulsesTimesRhythm * this.configuration.border)) + marginAndSeparation;
+        }
     }
 
     draw(): void {
@@ -165,6 +196,9 @@ class Billy {
         }
     }
 
+    ///////////////
+    // BEHAVIORS //
+    ///////////////
     behaviorDragging(e): void {
         if (!this.isShortcutDragging()) {
             return;
@@ -478,6 +512,87 @@ class Billy {
         }
     }
 
+    behaviorShortcut(e): void {
+        
+    }
+
+    /////////////////////
+    // HANDLING EVENTS //
+    /////////////////////
+    handleMouseWheel(e): void {
+        let rect = this.canvas.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+
+        let oldMeasure: Measure = this.measure(x, y);
+
+        // click was at margin or separation
+        if (oldMeasure == undefined) {
+            return;
+        }
+
+        let newRhythm: number;
+        let newPulse: number;
+
+        if (this.isShortcutRhythmChanging()) {
+            if (e.deltaY < 0) {
+                // going up
+                newRhythm = oldMeasure.rhythm + 1;
+                newPulse = oldMeasure.pulses;
+            }
+            else {
+                // going down
+                newRhythm = oldMeasure.rhythm - 1;
+                newPulse = oldMeasure.pulses;
+            }
+            
+            // 2 - third-second note
+            // 3 - sixteenth note
+            // 4 - eighth note
+            // 5 - quarter note
+            // 6 - half note
+            // 7 - whole note
+            if (newRhythm > 7) {
+                newRhythm == 7;
+            }
+
+            if (newRhythm < 2) { 
+                newRhythm == 2;
+            }
+        }
+        else if (this.isShortcutPulseChanging()) {
+            if (e.deltaY < 0) {
+                // going up
+                newRhythm = oldMeasure.rhythm;
+                newPulse = oldMeasure.pulses + 1;
+            }
+            else {
+                // going down
+                newRhythm = oldMeasure.rhythm;
+                newPulse = oldMeasure.pulses - 1;
+            }
+            
+            // 2 - 2/x measure
+            // 3 - 3/x measure
+            // 4 - 4/x measure
+            // 5 - 5/x measure
+            // 6 - 6/x measure
+            // 7 - 7/x measure
+            if (newPulse > 7) {
+                newPulse == 7;
+            }
+
+            if (newPulse < 2) { 
+                newPulse == 2;
+            }
+        }
+        else {
+            return;
+        }
+
+        this.draw();
+    }
+
     handleResizing(e): void {
         let maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * 0.05;
         let maxHeigth = (this.configuration.heigth * this.configuration.frequencies) + (this.configuration.border * (this.configuration.frequencies + 1)) + this.configuration.margin * 2;
@@ -610,11 +725,17 @@ class Billy {
         e.preventDefault();
         e.stopPropagation();
         
+        // to remove any selections
+        this.draw();
+
         this.mouseLeftButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
     }
 
+    /////////////////////
+    // SHORTCUT CHECKS //
+    /////////////////////
     isShortcutPrinting(): boolean {
         return this.mouseLeftButtonClicked;
     }
@@ -631,6 +752,34 @@ class Billy {
         for (let i = 0; i <= this.configuration.shortcuts.selection.length - 1; i++) {
             if (this.configuration.shortcuts.selection[i] != this.pressed[i]) { 
                 return false
+            }
+        }
+
+        return true;
+    }
+
+    isShortcutRhythmChanging(): boolean {
+        if (this.configuration.shortcuts.rhythmChange.length != this.pressed.length) {
+            return false;
+        }
+
+        for (let i = 0; i <= this.configuration.shortcuts.rhythmChange.length - 1; i++) {
+            if (this.configuration.shortcuts.rhythmChange[i] == this.pressed[i]) { 
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    isShortcutPulseChanging(): boolean {
+        if (this.configuration.shortcuts.pulsesChange.length != this.pressed.length) {
+            return false;
+        }
+
+        for (let i = 0; i <= this.configuration.shortcuts.pulsesChange.length - 1; i++) {
+            if (this.configuration.shortcuts.pulsesChange[i] == this.pressed[i]) { 
+                return false;
             }
         }
 

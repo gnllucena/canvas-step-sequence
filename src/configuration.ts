@@ -94,12 +94,14 @@ class Configuration {
         }
 
         if (_shortcuts == undefined) {
-            this.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null, null);
+            this.shortcuts = new Shortcuts(null, null, null, null, null, null, null, null, null, null, null, null);
         } 
         else {
             this.shortcuts = new Shortcuts(
                 _shortcuts.selection,
                 _shortcuts.removeSelection,
+                _shortcuts.rhythmChange,
+                _shortcuts.pulsesChange,
                 _shortcuts.movingSelectionUp,
                 _shortcuts.movingSelectionRight,
                 _shortcuts.movingSelectionDown,

@@ -1,6 +1,8 @@
 class Shortcuts {
     selection: number[];
     removeSelection: number[];
+    rhythmChange: number[];
+    pulsesChange: number[];
     movingSelectionUp: number[];
     movingSelectionRight: number[];
     movingSelectionDown: number[];
@@ -13,6 +15,8 @@ class Shortcuts {
     constructor(
         _selection: number[],
         _removeSelection: number[],
+        _rhythmChange: number[],
+        _pulsesChange: number[],
         _movingSelectionUp: number[],
         _movingSelectionRight: number[],
         _movingSelectionDown: number[],
@@ -34,6 +38,20 @@ class Shortcuts {
         } 
         else { 
             this.removeSelection = _removeSelection; 
+        }
+
+        if (_rhythmChange == undefined) {
+            this.rhythmChange = [16];
+        } 
+        else {
+            this.rhythmChange = _rhythmChange;
+        }
+
+        if (_pulsesChange == undefined) {
+            this.pulsesChange = [17];
+        } 
+        else {
+            this.pulsesChange = _pulsesChange;
         }
 
         if (_movingSelectionUp == undefined) {

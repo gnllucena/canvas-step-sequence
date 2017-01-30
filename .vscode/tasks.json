@@ -2,7 +2,7 @@
 	"version": "0.1.0",
 	"command": "tsc",
 	"isShellCommand": true,
-	"args": ["-p", "./scripts/"],
+	"args": ["-p", "./src/"],
 	"showOutput": "silent",
 	"problemMatcher": "$tsc"
 }

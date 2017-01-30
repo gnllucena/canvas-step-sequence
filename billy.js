@@ -25,6 +25,7 @@ var Billy = (function () {
         this.canvas.addEventListener('mouseout', this.handleMouseOut.bind(this));
         this.canvas.addEventListener('keydown', this.handleKeyDown.bind(this));
         this.canvas.addEventListener('keyup', this.handleKeyUp.bind(this));
+        this.canvas.addEventListener('mousewheel', this.handleMouseWheel.bind(this));
         this.canvas.oncontextmenu = function (e) {
             e.preventDefault();
         };
@@ -63,6 +64,7 @@ var Billy = (function () {
             heigthFrequencies = marginAndBorder;
             this.widthMeasures += (pulsesTimesRhythm * this.configuration.width) + ((pulsesTimesRhythm * this.configuration.border)) + marginAndSeparation;
         }
+        // ugly.. but fast enough
         for (var i = 0; i <= this.blocks.length - 1; i++) {
             newBlocks[i].printed = this.blocks[i].printed;
             newBlocks[i].selected = this.blocks[i].selected;
@@ -351,6 +353,10 @@ var Billy = (function () {
             }
         }
     };
+    Billy.prototype.behaviorShortcut = function (e) {
+    };
+    Billy.prototype.handleMouseWheel = function (e) {
+    };
     Billy.prototype.handleResizing = function (e) {
         var maxWidth = this.canvas.parentElement.offsetWidth - this.canvas.parentElement.offsetWidth * 0.05;
         var maxHeigth = (this.configuration.heigth * this.configuration.frequencies) + (this.configuration.border * (this.configuration.frequencies + 1)) + this.configuration.margin * 2;
@@ -455,6 +461,8 @@ var Billy = (function () {
     Billy.prototype.handleMouseOut = function (e) {
         e.preventDefault();
         e.stopPropagation();
+        // to remove any selections
+        this.draw();
         this.mouseLeftButtonClicked = false;
         this.mouseMiddleButtonClicked = false;
         this.mouseRightButtonClicked = false;
@@ -666,7 +674,7 @@ var Measure = (function () {
     return Measure;
 }());
 var Shortcuts = (function () {
-    function Shortcuts(_selection, _removeSelection, _movingSelectionUp, _movingSelectionRight, _movingSelectionDown, _movingSelectionLeft, _pastingSelectionUp, _pastingSelectionRight, _pastingSelectionDown, _pastingSelectionLeft) {
+    function Shortcuts(_selection, _removeSelection, _rhythmChange, _pulsesChange, _movingSelectionUp, _movingSelectionRight, _movingSelectionDown, _movingSelectionLeft, _pastingSelectionUp, _pastingSelectionRight, _pastingSelectionDown, _pastingSelectionLeft) {
         if (_selection == undefined) {
             this.selection = [16];
         }
@@ -678,6 +686,18 @@ var Shortcuts = (function () {
         }
         else {
             this.removeSelection = _removeSelection;
+        }
+        if (_rhythmChange == undefined) {
+            this.rhythmChange = [16];
+        }
+        else {
+            this.rhythmChange = _rhythmChange;
+        }
+        if (_pulsesChange == undefined) {
+            this.pulsesChange = [17];
+        }
+        else {
+            this.pulsesChange = _pulsesChange;
         }
         if (_movingSelectionUp == undefined) {
             this.movingSelectionUp = [38];
